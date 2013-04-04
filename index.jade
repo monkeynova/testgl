@@ -1,0 +1,46 @@
+doctype html
+html
+  head
+    title WebGL Test
+    script(src='./jquery-1.9.1.min.js')
+    script(src='./glMatrix-0.9.5.min.js')
+    script(src='./webgl-utils.js')
+    script(src='./code.js')
+
+    script#shader-fs(type="x-shader/x-fragment")
+      | precision mediump float;
+      | varying vec4 vColor;
+      | void main(void) {
+      |   gl_FragColor = vColor;
+      | }
+
+    script#shader-vs(type="x-shader/x-vertex")
+      | attribute vec3 aVertexPosition;
+      | attribute vec4 aVertexColor;
+      | uniform mat4 uMVMatrix;
+      | uniform mat4 uPMatrix;
+      | varying vec4 vColor;
+      | void main(void) {
+      |   gl_Position = uPMatrix * uMVMatrix * vec4( aVertexPosition, 1.0 );
+      |   vColor = aVertexColor;
+      | }
+
+    :stylus
+      body
+        font-family ariel sans-serif
+        text-align center
+
+      #canvasbox
+        border solid 1px black
+
+      #viewport
+        background grey
+        width 640px
+        height 480px
+
+  body(lang='en')
+    h1 Test Canvas
+    #canvasbox
+      canvas#viewport
+
+    #status Initializing...
