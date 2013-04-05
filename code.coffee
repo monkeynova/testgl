@@ -59,39 +59,13 @@ $ ->
     render()
 
   render = ->
-    requestAnimFrame render
     reshape()
     gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
     ticks++
 
-    triangle = gl.createBuffer()
-    gl.bindBuffer gl.ARRAY_BUFFER, triangle
-    tVertices = [ 0, 1, 0,   -1, -1, 0,   1, -1, 0 ]
-    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( tVertices ), gl.STATIC_DRAW
-    triangle.itemSize = 3
-    triangle.numItems = 3
-
-    tri_colors = gl.createBuffer()
-    gl.bindBuffer gl.ARRAY_BUFFER, tri_colors
-    tColors = [ 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1 ]
-    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( tColors ), gl.STATIC_DRAW
-    tri_colors.itemSize = 4
-    tri_colors.numItems = 4
-
-    square = gl.createBuffer()
-    gl.bindBuffer gl.ARRAY_BUFFER, square
-    sVertices = [ 1, 1, 0,   -1, 1, 0,   1, -1, 0, -1, -1, 0 ]
-    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( sVertices ), gl.STATIC_DRAW 
-    square.itemSize = 3
-    square.numItems = 4
-
-    sq_colors = gl.createBuffer()
-    gl.bindBuffer gl.ARRAY_BUFFER, sq_colors
-    sColors = [ 1, 0.5, 1, 1, 1, 0.5, 1, 1, 1, 0.5, 1, 1, 1, 0.5, 1, 1 ]
-    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( sColors ), gl.STATIC_DRAW
-    sq_colors.itemSize = 4
-    sq_colors.numItems = 4
+    triangle = new Triangle gl
+    square = new Square gl
 
     pMatrix = mat4.create()
     mat4.perspective 45, canvas.width / canvas.height, 0.1, 100, pMatrix
@@ -101,41 +75,19 @@ $ ->
 
     pushMatrix mMatrix
 
-    mat4.translate mMatrix, [ -1.5, 0, -7 ]
-
-    mat4.rotate mMatrix, 2 * Math.PI * ticks / 180, [ 0, 1, 0 ]
-
-    gl.bindBuffer gl.ARRAY_BUFFER, triangle
-    gl.vertexAttribPointer program.vertexPositionAttribute, triangle.itemSize, gl.FLOAT, false, 0, 0
-
-    gl.bindBuffer gl.ARRAY_BUFFER, tri_colors
-    gl.vertexAttribPointer program.vertexColorAttribute, tri_colors.itemSize, gl.FLOAT, false, 0, 0
-
-    gl.uniformMatrix4fv program.pMatrixUniform, false, pMatrix
-    gl.uniformMatrix4fv program.mvMatrixUniform, false, mMatrix
-    gl.drawArrays gl.TRIANGLES, 0, triangle.numItems
+    triangle.draw gl, pMatrix, mMatrix, program, ticks
 
     popMatrix mMatrix
 
     pushMatrix mMatrix
 
-    mat4.translate mMatrix, [ 1.5, 0, -7 ]
-
-    mat4.rotate mMatrix, 2 * Math.PI * ticks / 360, [ 1, 0, 0 ]
-
-    gl.bindBuffer gl.ARRAY_BUFFER, square
-    gl.vertexAttribPointer program.vertexPositionAttribute, square.itemSize, gl.FLOAT, false, 0, 0
-
-    gl.bindBuffer gl.ARRAY_BUFFER, sq_colors
-    gl.vertexAttribPointer program.vertexColorAttribute, sq_colors.itemSize, gl.FLOAT, false, 0, 0
-
-    gl.uniformMatrix4fv program.pMatrixUniform, false, pMatrix
-    gl.uniformMatrix4fv program.mvMatrixUniform, false, mMatrix
-    gl.drawArrays gl.TRIANGLE_STRIP, 0, square.numItems
+    square.draw gl, pMatrix, mMatrix, program, ticks
 
     popMatrix mMatrix
 
     status 'Running... fps=' + Math.floor(ticks * 1000 / ((new Date).getTime() - startDate.getTime()));
+
+    requestAnimFrame render
 
   reshape = ->
     return if canvas.clientWidth == canvas.width && canvas.clientHeight == canvas.height
@@ -166,3 +118,76 @@ $ ->
 
 
   initialize()
+
+class Shape
+  constructor: (gl) ->
+
+  update: ->
+
+  draw: (gl,pMatrix,mMatrix,color_shader,ticks) ->
+
+class Triangle extends Shape        
+  constructor: (gl) ->
+    @vertices = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+    @vertices.js = [ 0, 1, 0,   -1, -1, 0,   1, -1, 0 ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
+    @vertices.itemSize = 3
+    @vertices.numItems = 3
+  
+    @colors = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @colors
+    @colors.js = [ 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1 ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
+    @colors.itemSize = 4
+    @colors.numItems = 3
+
+  update: ->
+
+  draw: (gl,pMatrix,mMatrix,color_shader,ticks) ->
+    mat4.translate mMatrix, [ -1.5, 0, -7 ]
+
+    mat4.rotate mMatrix, 2 * Math.PI * ticks / 180, [ 0, 1, 0 ]
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+    gl.vertexAttribPointer color_shader.vertexPositionAttribute, @vertices.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @colors
+    gl.vertexAttribPointer color_shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.uniformMatrix4fv color_shader.pMatrixUniform, false, pMatrix
+    gl.uniformMatrix4fv color_shader.mvMatrixUniform, false, mMatrix
+    gl.drawArrays gl.TRIANGLES, 0, @vertices.numItems
+
+class Square extends Shape        
+  constructor: (gl) ->
+    @vertices = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+    @vertices.js = [ 1, 1, 0,   -1, 1, 0,   1, -1, 0, -1, -1, 0 ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
+    @vertices.itemSize = 3
+    @vertices.numItems = 4
+  
+    @colors = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @colors
+    @colors.js = [ 1, 0.5, 1, 1, 1, 0.5, 1, 1, 1, 0.5, 1, 1, 1, 0.5, 1, 1 ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
+    @colors.itemSize = 4
+    @colors.numItems = 4
+
+  update: ->
+
+  draw: (gl,pMatrix,mMatrix,color_shader,ticks) ->
+    mat4.translate mMatrix, [ 1.5, 0, -7 ]
+
+    mat4.rotate mMatrix, 2 * Math.PI * ticks / 360, [ 1, 0, 0 ]
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+    gl.vertexAttribPointer color_shader.vertexPositionAttribute, @vertices.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @colors
+    gl.vertexAttribPointer color_shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.uniformMatrix4fv color_shader.pMatrixUniform, false, pMatrix
+    gl.uniformMatrix4fv color_shader.mvMatrixUniform, false, mMatrix
+    gl.drawArrays gl.TRIANGLE_STRIP, 0, @vertices.numItems

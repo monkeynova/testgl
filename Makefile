@@ -2,7 +2,7 @@ OUT=build
 
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js
 COFFEE=code.coffee
-JS=$(patsubst %.coffee,%.js,$(COFFEE)) $(EXT_JS)
+JS=$(patsubst %.coffee,%.br.js,$(COFFEE)) $(EXT_JS)
 HTML=index.html
 
 all: html js
@@ -15,10 +15,19 @@ clean:
 
 neat:
 	rm -f *~
+	rm -f \#*\#
+	rm -f .\#*
 
 $(OUT)/%.html: %.jade
 	@mkdir -p $(@D)
 	jade -p . < $< > $@.tmp
+	mv $@.tmp $@
+
+#$(OUT)/code.br.js: $(OUT)/shapes.br.js
+
+$(OUT)/%.br.js: $(OUT)/%.js
+	@mkdir -p $(@D)
+	browserify $< -o $@.tmp
 	mv $@.tmp $@
 
 $(OUT)/%.js: %.coffee
