@@ -1,1 +1,7 @@
+# Build directory
 build
+
+# Emacs temp files
+*~
+.#*
+\#*#

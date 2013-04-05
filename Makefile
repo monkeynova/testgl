@@ -5,7 +5,10 @@ COFFEE=code.coffee
 JS=$(patsubst %.coffee,%.js,$(COFFEE)) $(EXT_JS)
 HTML=index.html
 
-all: $(addprefix $(OUT)/,$(HTML) $(JS))
+all: html js
+
+html: $(addprefix $(OUT)/,$(HTML))
+js: $(addprefix $(OUT)/,$(JS)) 
 
 clean:
 	rm -rf $(OUT)
@@ -15,7 +18,7 @@ neat:
 
 $(OUT)/%.html: %.jade
 	@mkdir -p $(@D)
-	jade < $< > $@.tmp
+	jade -p . < $< > $@.tmp
 	mv $@.tmp $@
 
 $(OUT)/%.js: %.coffee
