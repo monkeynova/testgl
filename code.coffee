@@ -6,6 +6,11 @@ $ ->
   program = null
   ticks = 0
   startDate = null
+  paused = 0
+
+  shapes = []
+  pMatrix = null
+  mMatrix = null
 
   matrixStack = []
 
@@ -29,7 +34,7 @@ $ ->
       return
 
     gl.enable gl.DEPTH_TEST
-    gl.clearColor 0.3, 0.3, 0.3, 1
+    gl.clearColor 0.1, 0.1, 0.1, 1
 
     fragmentShader = getShader gl, 'shader-fs'
     vertexShader = getShader gl, 'shader-vs'
@@ -55,37 +60,35 @@ $ ->
 
     startDate = new Date()
 
+    shapes.push( new Pyramid gl )
+    shapes.push( new Cube gl )
+
     status 'Initialized...'
     render()
 
+  pause = -> paused = 1
+  unpause = -> paused = 0; render
+
   render = ->
+    return if paused
+
     reshape()
     gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
+    now = new Date()
+
+    elapsed = (now.getTime() - startDate.getTime()) / 1000;
+
     ticks++
 
-    triangle = new Triangle gl
-    square = new Square gl
+    for s in shapes
+      s.update elapsed
 
-    pMatrix = mat4.create()
-    mat4.perspective 45, canvas.width / canvas.height, 0.1, 100, pMatrix
+      pushMatrix mMatrix
+      s.draw gl, pMatrix, mMatrix, program
+      popMatrix mMatrix
 
-    mMatrix = mat4.create()
-    mat4.identity mMatrix
-
-    pushMatrix mMatrix
-
-    triangle.draw gl, pMatrix, mMatrix, program, ticks
-
-    popMatrix mMatrix
-
-    pushMatrix mMatrix
-
-    square.draw gl, pMatrix, mMatrix, program, ticks
-
-    popMatrix mMatrix
-
-    status 'Running... fps=' + Math.floor(ticks * 1000 / ((new Date).getTime() - startDate.getTime()));
+    status 'Running... fps=' + Math.floor(ticks  / elapsed)
 
     requestAnimFrame render
 
@@ -94,6 +97,12 @@ $ ->
     canvas.width = canvas.clientWidth
     canvas.height = canvas.clientHeight
     gl.viewport 0, 0, canvas.width, canvas.height
+
+    pMatrix = mat4.create()
+    mat4.perspective 45, canvas.width / canvas.height, 0.1, 100, pMatrix
+
+    mMatrix = mat4.create()
+    mat4.identity mMatrix
 
   getShader = (gl, id) ->
     shaderScript = document.getElementById id
@@ -122,72 +131,266 @@ $ ->
 class Shape
   constructor: (gl) ->
 
-  update: ->
+  update: (elapsed) ->
 
-  draw: (gl,pMatrix,mMatrix,color_shader,ticks) ->
+  position: (m) ->
+
+  draw: (gl,pMatrix,mMatrix,color_shader) ->
+    @position mMatrix
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+    gl.vertexAttribPointer color_shader.vertexPositionAttribute, @vertices.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @colors
+    gl.vertexAttribPointer color_shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
+
+    if @index
+      gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
+
+      gl.uniformMatrix4fv color_shader.pMatrixUniform, false, pMatrix
+      gl.uniformMatrix4fv color_shader.mvMatrixUniform, false, mMatrix
+
+      gl.drawElements @drawtype, @index.numItems, gl.UNSIGNED_SHORT, 0
+    else
+      gl.uniformMatrix4fv color_shader.pMatrixUniform, false, pMatrix
+      gl.uniformMatrix4fv color_shader.mvMatrixUniform, false, mMatrix
+
+      gl.drawArrays @drawtype, 0, @vertices.numItems
 
 class Triangle extends Shape        
   constructor: (gl) ->
     @vertices = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
-    @vertices.js = [ 0, 1, 0,   -1, -1, 0,   1, -1, 0 ]
+    @vertices.js =
+      [
+         0, 1, 0,
+         -1, -1, 0,
+         1, -1, 0,
+      ]
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
     @vertices.itemSize = 3
+    @vertices.numItems = @vertices.js.length / @vertices.itemSize
     @vertices.numItems = 3
   
     @colors = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @colors
-    @colors.js = [ 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1 ]
+    @colors.js =
+      [
+        1, 0, 0, 1,
+        0, 1, 0, 1,
+        0, 0, 1, 1,
+      ]
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
     @colors.itemSize = 4
-    @colors.numItems = 3
+    @colors.numItems = @colors.js.length / @colors.itemSize
 
-  update: ->
+    @drawtype = gl.TRIANGLES
 
-  draw: (gl,pMatrix,mMatrix,color_shader,ticks) ->
-    mat4.translate mMatrix, [ -1.5, 0, -7 ]
+  position: (m) ->
+    mat4.translate m, [ -1.5, 0, -7 ]
+    mat4.rotate m, @angle, [ 0, 1, 0 ]
 
-    mat4.rotate mMatrix, 2 * Math.PI * ticks / 180, [ 0, 1, 0 ]
-
-    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
-    gl.vertexAttribPointer color_shader.vertexPositionAttribute, @vertices.itemSize, gl.FLOAT, false, 0, 0
-
-    gl.bindBuffer gl.ARRAY_BUFFER, @colors
-    gl.vertexAttribPointer color_shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
-
-    gl.uniformMatrix4fv color_shader.pMatrixUniform, false, pMatrix
-    gl.uniformMatrix4fv color_shader.mvMatrixUniform, false, mMatrix
-    gl.drawArrays gl.TRIANGLES, 0, @vertices.numItems
+  update: (elapsed) ->
+    @angle = 2 * Math.PI * elapsed / 3
 
 class Square extends Shape        
   constructor: (gl) ->
     @vertices = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
-    @vertices.js = [ 1, 1, 0,   -1, 1, 0,   1, -1, 0, -1, -1, 0 ]
+    @vertices.js =
+      [
+        1, 1, 0,
+        -1, 1, 0,
+        1, -1, 0,
+        -1, -1, 0,
+      ]
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
     @vertices.itemSize = 3
-    @vertices.numItems = 4
+    @vertices.numItems = @vertices.js.length / @vertices.itemSize
   
     @colors = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @colors
-    @colors.js = [ 1, 0.5, 1, 1, 1, 0.5, 1, 1, 1, 0.5, 1, 1, 1, 0.5, 1, 1 ]
+    @colors.js =
+      [
+        1, 0.5, 1, 1,
+        1, 0.5, 1, 1,
+        1, 0.5, 1, 1,
+        1, 0.5, 1, 1,
+      ]
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
     @colors.itemSize = 4
-    @colors.numItems = 4
+    @colors.numItems = @colors.js.length / @colors.itemSize
 
-  update: ->
+    @drawtype = gl.TRIANGLE_STRIP
 
-  draw: (gl,pMatrix,mMatrix,color_shader,ticks) ->
-    mat4.translate mMatrix, [ 1.5, 0, -7 ]
+  update: (elapsed) ->
+    @angle = 2 * Math.PI * elapsed / 5
 
-    mat4.rotate mMatrix, 2 * Math.PI * ticks / 360, [ 1, 0, 0 ]
+  position: (m) ->
+    mat4.translate m, [ 1.5, 0, -7 ]
+    mat4.rotate m, @angle, [ 1, 0, 0 ]
 
+class Pyramid extends Shape        
+  constructor: (gl) ->
+    @vertices = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
-    gl.vertexAttribPointer color_shader.vertexPositionAttribute, @vertices.itemSize, gl.FLOAT, false, 0, 0
-
+    @vertices.js =
+      [
+         # Front
+         0, 1, 0,
+         -1, -1, 1,
+         1, -1, 1,
+         # Right
+         0, 1, 0,
+         1, -1, 1,
+         1, -1, -1,
+         # Back
+         0, 1, 0,
+         1, -1, -1,
+         -1, -1, -1,
+         # Left
+         0, 1, 0,
+         -1, -1, -1,
+         -1, -1, 1,
+      ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
+    @vertices.itemSize = 3
+    @vertices.numItems = @vertices.js.length / @vertices.itemSize
+  
+    @colors = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @colors
-    gl.vertexAttribPointer color_shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
+    @colors.js =
+      [
+        # Front
+        1, 0, 0, 1,
+        0, 1, 0, 1,
+        0, 0, 1, 1,
+        # Right
+        1, 0, 0, 1,
+        0, 0, 1, 1,
+        0, 1, 0, 1,
+        # Back
+        1, 0, 0, 1,
+        0, 1, 0, 1,
+        0, 0, 1, 1,
+        # Left
+        1, 0, 0, 1,
+        0, 0, 1, 1,
+        0, 1, 0, 1,
+      ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
+    @colors.itemSize = 4
+    @colors.numItems = @colors.js.length / @colors.itemSize
 
-    gl.uniformMatrix4fv color_shader.pMatrixUniform, false, pMatrix
-    gl.uniformMatrix4fv color_shader.mvMatrixUniform, false, mMatrix
-    gl.drawArrays gl.TRIANGLE_STRIP, 0, @vertices.numItems
+    @drawtype = gl.TRIANGLES
+
+  position: (m) ->
+    mat4.translate m, [ -1.5, 0, -8 ]
+    mat4.rotate m, @angle, [ 0, 1, 0 ]
+
+  update: (elapsed) ->
+    @angle = 2 * Math.PI * elapsed / 3
+
+class Cube extends Shape        
+  constructor: (gl) ->
+    @vertices = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+    @vertices.js =
+      [
+        # Front
+        1, 1, 1,
+        -1, 1, 1,
+        1, -1, 1,
+        -1, -1, 1,
+        # Back
+        1, 1, -1,
+        -1, 1, -1,
+        1, -1, -1,
+        -1, -1, -1,
+        # Right
+        1, 1, 1,
+        1, -1, 1,
+        1, 1, -1,
+        1, -1, -1,
+        # Left
+        -1, 1, 1,
+        -1, -1, 1,
+        -1, 1, -1,
+        -1, -1, -1,
+        # Top
+        1, -1, 1,
+        -1, -1, 1,
+        1, -1, -1,
+        -1, -1, -1,
+        # Bottom
+        1, 1, 1,
+        -1, 1, 1,
+        1, 1, -1,
+        -1, 1, -1,
+      ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
+    @vertices.itemSize = 3
+    @vertices.numItems = @vertices.js.length / @vertices.itemSize
+  
+    @colors = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @colors
+    @colors.js =
+      [
+        # Front
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        # Back
+        1, 1, 0, 1,
+        1, 1, 0, 1,
+        1, 1, 0, 1,
+        1, 1, 0, 1,
+        # Right
+        1, 0, 1, 1,
+        1, 0, 1, 1,
+        1, 0, 1, 1,
+        1, 0, 1, 1,
+        # Left
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        # Top
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+        # Bottom
+        1, 0.5, 0.5, 1,
+        1, 0.5, 0.5, 1,
+        1, 0.5, 0.5, 1,
+        1, 0.5, 0.5, 1,
+      ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
+    @colors.itemSize = 4
+    @colors.numItems = @colors.js.length / @colors.itemSize
+
+    @index = gl.createBuffer()
+    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
+    @index.js =
+      [
+        0, 1, 2,    1, 2, 3,     # Front
+        4, 5, 6,    5, 6, 7,     # Back
+        8, 9, 10,   9, 10, 11,   # Right
+        12, 13, 14, 13, 14, 15,  # Left
+        16, 17, 18, 17, 18, 19,  # Top
+        20, 21, 22, 21, 22, 23,  # Bottom
+      ]
+    gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( @index.js ), gl.STATIC_DRAW
+    @index.itemSize = 1
+    @index.numItems = @index.js.length / @index.itemSize
+
+    @drawtype = gl.TRIANGLES
+
+  update: (elapsed) ->
+    @angle = 2 * Math.PI * elapsed / 5
+
+  position: (m) ->
+    mat4.translate m, [ 1.5, 0, -8 ]
+    mat4.rotate m, @angle, [ 1, 1, 1 ]
