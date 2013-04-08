@@ -74,9 +74,9 @@ $ ->
     tick_time.shift() while tick_time.length > 100
 
     gl.useProgram program
-    gl.uniform3f program.lightDirectionUniform, -1, 1, 1
-    gl.uniform3f program.ambientColorUniform, 0, 0, 0
-    gl.uniform3f program.directionalColorUniform, 1, 1, 1
+    gl.uniform3f program.uniforms["uLightDirection"], -1, 1, 1
+    gl.uniform3f program.uniforms["uAmbientColor"], 0, 0, 0
+    gl.uniform3f program.uniforms["uDirectionalColor"], 1, 1, 1
 
     for s in shapes
       s.update elapsed

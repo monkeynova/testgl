@@ -16,32 +16,37 @@ initShaders = (gl) ->
 
   gl.useProgram program
 
-  program.vertexPositionAttribute = gl.getAttribLocation program, "aVertexPosition"
-  console.log "aVertexPosition=" + program.vertexPositionAttribute
-  gl.enableVertexAttribArray program.vertexPositionAttribute
+  attribute_names =
+    [
+      "aVertexPosition",
+      "aVertexNormal",
+      "aVertexColor",
+      "aTextureCoord",
+    ]
 
-  program.vertexNormalAttribute = gl.getAttribLocation program, "aVertexNormal"
-  console.log "aVertexNormal=" + program.vertexNormalAttribute
-  gl.enableVertexAttribArray program.vertexNormalAttribute
+  program.attributes = []
 
-  program.vertexColorAttribute = gl.getAttribLocation program, "aVertexColor"
-  console.log "aVertexColor=" + program.vertexColorAttribute
-  gl.enableVertexAttribArray program.vertexColorAttribute
+  for name in attribute_names
+    program.attributes[name] = gl.getAttribLocation program, name
+    gl.enableVertexAttribArray program.attributes[name]
+    console.log name + "=" + program.attributes[name]        
 
-  program.vertexTextureAttribute = gl.getAttribLocation program, "aTextureCoord"
-  console.log "aTextureCoord=" + program.vertexTextureAttribute
-  gl.enableVertexAttribArray program.vertexTextureAttribute
+  uniform_names =
+    [
+      "uPMatrix",
+      "uMVMatrix",
+      "uNMatrix",
+      "uSampler",
+      "uUseTexture",
+      "uLightDirection",
+      "uAmbientColor",
+      "uDirectionalColor",
+    ]
 
-  program.pMatrixUniform = gl.getUniformLocation program, "uPMatrix"
-  program.mvMatrixUniform = gl.getUniformLocation program, "uMVMatrix"
-  program.nMatrixUniform = gl.getUniformLocation program, "uNMatrix"
+  program.uniforms = []
 
-  program.samplerUniform = gl.getUniformLocation program, "uSampler"
-  program.useTextureUniform = gl.getUniformLocation program, "uUseTexture"
-
-  program.lightDirectionUniform = gl.getUniformLocation program, "uLightDirection"
-  program.ambientColorUniform = gl.getUniformLocation program, "uAmbientColor"
-  program.directionalColorUniform = gl.getUniformLocation program, "uDirectionalColor"
+  for name in uniform_names
+    program.uniforms[name] = gl.getUniformLocation program, name
 
   return program
 

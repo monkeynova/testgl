@@ -24,15 +24,15 @@ class Shape
     gl.useProgram shader
 
     if @texture
-      gl.uniform1i shader.useTextureUniform, 1
+      gl.uniform1i shader.uniforms["uUseTexture"], 1
 
       if @texture.loaded
         gl.activeTexture gl.TEXTURE0
         gl.bindTexture gl.TEXTURE_2D, @texture
-        gl.uniform1i shader.samplerUniform, 0
+        gl.uniform1i shader.uniforms["uSampler"], 0
 
     else
-      gl.uniform1i shader.useTextureUniform, 0
+      gl.uniform1i shader.uniforms["uUseTexture"], 0
 
     if not @texture_coord
       @texture_coord = gl.createBuffer()
@@ -44,25 +44,25 @@ class Shape
       @texture_coord.numItems = @texture_coord.js.length / @texture_coord.itemSize
       
     gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
-    gl.vertexAttribPointer shader.vertexTextureAttribute, @texture_coord.itemSize, gl.FLOAT, false, 0, 0
+    gl.vertexAttribPointer shader.attributes["aTextureCoord"], @texture_coord.itemSize, gl.FLOAT, false, 0, 0
 
     gl.bindBuffer gl.ARRAY_BUFFER, @colors
-    gl.vertexAttribPointer shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
+    gl.vertexAttribPointer shader.attributes["aVertexColor"], @colors.itemSize, gl.FLOAT, false, 0, 0
 
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
-    gl.vertexAttribPointer shader.vertexPositionAttribute, @vertices.itemSize, gl.FLOAT, false, 0, 0
+    gl.vertexAttribPointer shader.attributes["aVertexPosition"], @vertices.itemSize, gl.FLOAT, false, 0, 0
 
     gl.bindBuffer gl.ARRAY_BUFFER, @normals
-    gl.vertexAttribPointer shader.vertexNormalAttribute, @normals.itemSize, gl.FLOAT, false, 0, 0
+    gl.vertexAttribPointer shader.attributes["aVertexNormal"], @normals.itemSize, gl.FLOAT, false, 0, 0
 
-    gl.uniformMatrix4fv shader.pMatrixUniform, false, pMatrix
-    gl.uniformMatrix4fv shader.mvMatrixUniform, false, mMatrix
+    gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
+    gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mMatrix
 
     normalMatrix = mat3.create()
     mat4.toInverseMat3 mMatrix, normalMatrix
     mat3.transpose normalMatrix
 
-    gl.uniformMatrix3fv shader.nMatrixUniform, false, normalMatrix
+    gl.uniformMatrix3fv shader.uniforms["uNMatrix"], false, normalMatrix
 
     if @index
       gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
