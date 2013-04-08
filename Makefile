@@ -1,8 +1,9 @@
 OUT=build
+GENERATED=.generated
 
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js
 COFFEE=code.coffee
-JS=$(patsubst %.coffee,%.br.js,$(COFFEE)) $(EXT_JS)
+JS=$(patsubst %.coffee,%.js,$(COFFEE)) $(EXT_JS)
 HTML=index.html
 
 all: html js
@@ -23,14 +24,14 @@ $(OUT)/%.html: %.jade
 	jade -p . < $< > $@.tmp
 	mv $@.tmp $@
 
-#$(OUT)/code.br.js: $(OUT)/shapes.br.js
+$(OUT)/index.html: color.frag color.vert texture.frag texture.vert
 
-$(OUT)/%.br.js: $(OUT)/%.js
+$(GENERATED)/code.coffee: code.coffee shaders.coffee shapes.coffee
 	@mkdir -p $(@D)
-	browserify $< -o $@.tmp
+	coffeescript-concat -I . -o $@.tmp $<
 	mv $@.tmp $@
 
-$(OUT)/%.js: %.coffee
+$(OUT)/%.js: $(GENERATED)/%.coffee
 	@mkdir -p $(@D)
 	coffee -p $< > $@.tmp
 	mv $@.tmp $@

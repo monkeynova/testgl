@@ -6,12 +6,17 @@ html
     script(src='./jquery-1.9.1.min.js')
     script(src='./glMatrix-0.9.5.min.js')
     script(src='./webgl-utils.js')
-    script(src='./code.br.js')
+    script(src='./code.js')
 
-    script#shader-fs(type="x-shader/x-fragment")
+    script#color-fs(type="x-shader/x-fragment")
       include color.frag
-    script#shader-vs(type="x-shader/x-vertex")
+    script#color-vs(type="x-shader/x-vertex")
       include color.vert
+
+    script#texture-fs(type="x-shader/x-fragment")
+      include texture.frag
+    script#texture-vs(type="x-shader/x-vertex")
+      include texture.vert
 
     :stylus
       body
