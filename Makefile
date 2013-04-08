@@ -6,7 +6,7 @@ COFFEE=code.coffee
 JS=$(patsubst %.coffee,%.js,$(COFFEE)) $(EXT_JS)
 HTML=index.html
 
-all: html js
+all: html js $(OUT)/nehe.gif
 
 html: $(addprefix $(OUT)/,$(HTML))
 js: $(addprefix $(OUT)/,$(JS)) 
@@ -34,6 +34,11 @@ $(GENERATED)/code.coffee: code.coffee shaders.coffee shapes.coffee
 $(OUT)/%.js: $(GENERATED)/%.coffee
 	@mkdir -p $(@D)
 	coffee -p $< > $@.tmp
+	mv $@.tmp $@
+
+$(OUT)/%: %
+	@mkdir -p $(@D)
+	cp $< $@.tmp
 	mv $@.tmp $@
 
 $(OUT)/webgl-utils.js:

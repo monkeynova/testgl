@@ -1,6 +1,7 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 #=require <shaders.coffee>
 #=require <shapes.coffee>
+#=require <texture.coffee>
 
 $ ->
   canvas = document.getElementById 'viewport'
@@ -43,7 +44,7 @@ $ ->
     startDate = new Date()
 
     shapes.push( new Pyramid gl )
-    shapes.push( new Cube gl )
+    shapes.push( new TextureCube gl, texture_data_url )
 
     status 'Initialized...'
     render()
@@ -65,13 +66,11 @@ $ ->
     tick_time.push( now );
     tick_time.shift() while tick_time.length > 100
 
-    gl.useProgram color_program
-
     for s in shapes
       s.update elapsed
 
       pushMatrix mMatrix
-      s.draw gl, pMatrix, mMatrix, color_program
+      s.draw gl, pMatrix, mMatrix, color_program, texture_program
       popMatrix mMatrix
 
     fps = Math.floor(ticks  / elapsed)

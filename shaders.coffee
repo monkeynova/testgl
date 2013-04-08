@@ -55,6 +55,8 @@ initTextureShader = (gl) ->
   program.vertexTextureAttribute = gl.getAttribLocation program, "aTextureCoord"
   gl.enableVertexAttribArray program.vertexColorAttribute
 
+  program.samplerUniform = gl.getUniformLocation program, "uSampler"
+
   program.pMatrixUniform = gl.getUniformLocation program, "uPMatrix"
   program.mvMatrixUniform = gl.getUniformLocation program, "uMVMatrix"
 

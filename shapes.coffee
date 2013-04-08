@@ -6,26 +6,49 @@ class Shape
 
   position: (m) ->
 
-  draw: (gl,pMatrix,mMatrix,color_shader) ->
+  initTexture: (gl) ->
+    gl.bindTexture gl.TEXTURE_2D, @texture
+    gl.pixelStorei gl.UNPACK_FLIP_Y_WEBGL, true
+    gl.texImage2D gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, @texture.image
+    gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST
+    gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST
+    gl.bindTexture gl.TEXTURE_2D, null
+    @texture.loaded = true
+
+  draw: (gl,pMatrix,mMatrix,color_shader,texture_shader) ->
     @position mMatrix
 
-    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
-    gl.vertexAttribPointer color_shader.vertexPositionAttribute, @vertices.itemSize, gl.FLOAT, false, 0, 0
+    shader = null
 
-    gl.bindBuffer gl.ARRAY_BUFFER, @colors
-    gl.vertexAttribPointer color_shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
+    if @texture
+      shader = texture_shader
+      gl.useProgram shader
+
+      gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
+      gl.vertexAttribPointer shader.vertexTextureAttribute, @texture_coord.itemSize, gl.FLOAT, false, 0, 0
+
+      if @texture.loaded
+        gl.activeTexture gl.TEXTURE0
+        gl.bindTexture gl.TEXTURE_2D, @texture
+        gl.uniform1i shader.samplerUniform, 0
+
+    else
+      shader = color_shader
+      gl.useProgram shader
+
+      gl.bindBuffer gl.ARRAY_BUFFER, @colors
+      gl.vertexAttribPointer shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+    gl.vertexAttribPointer shader.vertexPositionAttribute, @vertices.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.uniformMatrix4fv shader.pMatrixUniform, false, pMatrix
+    gl.uniformMatrix4fv shader.mvMatrixUniform, false, mMatrix
 
     if @index
       gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
-
-      gl.uniformMatrix4fv color_shader.pMatrixUniform, false, pMatrix
-      gl.uniformMatrix4fv color_shader.mvMatrixUniform, false, mMatrix
-
       gl.drawElements @drawtype, @index.numItems, gl.UNSIGNED_SHORT, 0
     else
-      gl.uniformMatrix4fv color_shader.pMatrixUniform, false, pMatrix
-      gl.uniformMatrix4fv color_shader.mvMatrixUniform, false, mMatrix
-
       gl.drawArrays @drawtype, 0, @vertices.numItems
 
 class Triangle extends Shape        
@@ -265,3 +288,55 @@ class Cube extends Shape
   position: (m) ->
     mat4.translate m, [ 1.5, 0, -8 ]
     mat4.rotate m, @angle, [ 1, 1, 1 ]
+
+
+class TextureCube extends Cube
+  constructor: (gl,texture_url) ->
+    super( gl )
+
+    shape = this
+
+    @texture = gl.createTexture()
+    @texture.loaded = false;
+    @texture.image = new Image();
+    @texture.image.onload = -> shape.initTexture( gl )
+    @texture.image.src = texture_url
+
+    @texture_coord = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
+    @texture_coord.js =
+      [
+        # Front
+        0, 0,
+        1, 0,
+        0, 1,
+        1, 1,
+        # Back
+        1, 0,
+        1, 1,
+        0, 0,
+        0, 1,
+        # Right
+        1, 0,
+        1, 1,
+        0, 0,
+        0, 1,
+        # Left
+        0, 0,
+        1, 0,
+        0, 1,
+        1, 1,
+        # Top
+        0, 1,
+        0, 0,
+        1, 1,
+        1, 0,
+        # Bottom
+        1, 1,
+        0, 1,
+        1, 0,
+        0, 0,
+      ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @texture_coord.js ), gl.STATIC_DRAW
+    @texture_coord.itemSize = 2
+    @texture_coord.numItems = @texture_coord.js.length / @texture_coord.itemSize    
