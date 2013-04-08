@@ -47,8 +47,11 @@ $ ->
 
     startDate = new Date()
 
-    shapes.push( new Pyramid gl )
-    shapes.push( new TextureCube gl, texture_data_url )
+    pyramid_center = [ -1.5, 0, -7 ]
+    shapes.push( new Pyramid gl, pyramid_center )
+
+    cube_center = [ 1.5, 0, -7 ]
+    shapes.push( new TextureCube gl, cube_center, texture_data_url )
 
     status 'Initialized...'
     render()

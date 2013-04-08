@@ -1,6 +1,7 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 class Shape
-  constructor: (gl) ->
+  constructor: (gl,center) ->
+    @center = center
 
   update: (elapsed) ->
 
@@ -16,6 +17,8 @@ class Shape
     @texture.loaded = true
 
   draw: (gl,pMatrix,mMatrix,shader) ->
+    mat4.translate mMatrix, @center
+  
     @position mMatrix
 
     gl.useProgram shader
@@ -68,7 +71,8 @@ class Shape
       gl.drawArrays @drawtype, 0, @vertices.numItems
 
 class Triangle extends Shape        
-  constructor: (gl) ->
+  constructor: (gl,center) ->
+    super gl, center
     @vertices = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
     @vertices.js =
@@ -97,14 +101,14 @@ class Triangle extends Shape
     @drawtype = gl.TRIANGLES
 
   position: (m) ->
-    mat4.translate m, [ -1.5, 0, -7 ]
     mat4.rotate m, @angle, [ 0, 1, 0 ]
 
   update: (elapsed) ->
     @angle = 2 * Math.PI * elapsed / 3
 
 class Square extends Shape        
-  constructor: (gl) ->
+  constructor: (gl,center) ->
+    super gl, center
     @vertices = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
     @vertices.js =
@@ -137,11 +141,11 @@ class Square extends Shape
     @angle = 2 * Math.PI * elapsed / 5
 
   position: (m) ->
-    mat4.translate m, [ 1.5, 0, -7 ]
     mat4.rotate m, @angle, [ 1, 0, 0 ]
 
 class Pyramid extends Shape        
-  constructor: (gl) ->
+  constructor: (gl,center) ->
+    super gl, center
     @vertices = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
     @vertices.js =
@@ -221,14 +225,14 @@ class Pyramid extends Shape
     @drawtype = gl.TRIANGLES
 
   position: (m) ->
-    mat4.translate m, [ -1.5, 0, -8 ]
     mat4.rotate m, @angle, [ 0, 1, 0 ]
 
   update: (elapsed) ->
     @angle = 2 * Math.PI * elapsed / 3
 
 class Cube extends Shape        
-  constructor: (gl) ->
+  constructor: (gl,center) ->
+    super gl, center
     @vertices = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
     @vertices.js =
@@ -367,13 +371,12 @@ class Cube extends Shape
     @angle = 2 * Math.PI * elapsed / 5
 
   position: (m) ->
-    mat4.translate m, [ 1.5, 0, -8 ]
     mat4.rotate m, @angle, [ 1, 1, 1 ]
 
 
 class TextureCube extends Cube
-  constructor: (gl,texture_url) ->
-    super( gl )
+  constructor: (gl,center,texture_url) ->
+    super gl, center
 
     shape = this
 
