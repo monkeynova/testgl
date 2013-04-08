@@ -24,7 +24,7 @@ $(OUT)/%.html: %.jade
 	jade -p . < $< > $@.tmp
 	mv $@.tmp $@
 
-$(OUT)/index.html: color.frag color.vert texture.frag texture.vert
+$(OUT)/index.html: shader.frag shader.vert
 
 $(GENERATED)/code.coffee: code.coffee shaders.coffee shapes.coffee
 	@mkdir -p $(@D)

@@ -39,6 +39,10 @@ $ ->
     gl.enable gl.DEPTH_TEST
     gl.clearColor 0.1, 0.1, 0.1, 1
 
+    #gl.blendFunc gl.SRC_ALPHA, gl.ONE
+    #gl.enable gl.BLEND;
+    #gl.disable gl.DEPTH_TEST;
+
     initShaders gl
 
     startDate = new Date()
@@ -66,11 +70,16 @@ $ ->
     tick_time.push( now );
     tick_time.shift() while tick_time.length > 100
 
+    gl.useProgram program
+    gl.uniform3f program.lightDirectionUniform, -1, 1, 1
+    gl.uniform3f program.ambientColorUniform, 0, 0, 0
+    gl.uniform3f program.directionalColorUniform, 1, 1, 1
+
     for s in shapes
       s.update elapsed
 
       pushMatrix mMatrix
-      s.draw gl, pMatrix, mMatrix, color_program, texture_program
+      s.draw gl, pMatrix, mMatrix, program
       popMatrix mMatrix
 
     fps = Math.floor(ticks  / elapsed)

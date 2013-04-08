@@ -8,15 +8,10 @@ html
     script(src='./webgl-utils.js')
     script(src='./code.js')
 
-    script#color-fs(type="x-shader/x-fragment")
-      include color.frag
-    script#color-vs(type="x-shader/x-vertex")
-      include color.vert
-
-    script#texture-fs(type="x-shader/x-fragment")
-      include texture.frag
-    script#texture-vs(type="x-shader/x-vertex")
-      include texture.vert
+    script#shader-fs(type="x-shader/x-fragment")
+      include shader.frag
+    script#shader-vs(type="x-shader/x-vertex")
+      include shader.vert
 
     :stylus
       body

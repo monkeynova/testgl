@@ -1,16 +1,9 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-color_program = null
-texture_program = null
+program = null
 
 initShaders = (gl) ->
-  color_program = initColorShader gl
-  texture_program = initTextureShader gl
-
-initColorShader = (gl) ->
-  program = null
-
-  fragmentShader = getShader gl, 'color-fs'
-  vertexShader = getShader gl, 'color-vs'
+  fragmentShader = getShader gl, 'shader-fs'
+  vertexShader = getShader gl, 'shader-vs'
 
   program = gl.createProgram()
   gl.attachShader program, vertexShader
@@ -22,43 +15,33 @@ initColorShader = (gl) ->
     return;
 
   gl.useProgram program
+
   program.vertexPositionAttribute = gl.getAttribLocation program, "aVertexPosition"
+  console.log "aVertexPosition=" + program.vertexPositionAttribute
   gl.enableVertexAttribArray program.vertexPositionAttribute
+
+  program.vertexNormalAttribute = gl.getAttribLocation program, "aVertexNormal"
+  console.log "aVertexNormal=" + program.vertexNormalAttribute
+  gl.enableVertexAttribArray program.vertexNormalAttribute
 
   program.vertexColorAttribute = gl.getAttribLocation program, "aVertexColor"
+  console.log "aVertexColor=" + program.vertexColorAttribute
   gl.enableVertexAttribArray program.vertexColorAttribute
-
-  program.pMatrixUniform = gl.getUniformLocation program, "uPMatrix"
-  program.mvMatrixUniform = gl.getUniformLocation program, "uMVMatrix"
-
-  return program
-
-initTextureShader = (gl) ->
-  program = null
-
-  fragmentShader = getShader gl, 'texture-fs'
-  vertexShader = getShader gl, 'texture-vs'
-
-  program = gl.createProgram()
-  gl.attachShader program, vertexShader
-  gl.attachShader program, fragmentShader
-  gl.linkProgram program
-
-  if ( ! gl.getProgramParameter program, gl.LINK_STATUS )
-    status 'Shader link failed'
-    return;
-
-  gl.useProgram program
-  program.vertexPositionAttribute = gl.getAttribLocation program, "aVertexPosition"
-  gl.enableVertexAttribArray program.vertexPositionAttribute
 
   program.vertexTextureAttribute = gl.getAttribLocation program, "aTextureCoord"
-  gl.enableVertexAttribArray program.vertexColorAttribute
-
-  program.samplerUniform = gl.getUniformLocation program, "uSampler"
+  console.log "aTextureCoord=" + program.vertexTextureAttribute
+  gl.enableVertexAttribArray program.vertexTextureAttribute
 
   program.pMatrixUniform = gl.getUniformLocation program, "uPMatrix"
   program.mvMatrixUniform = gl.getUniformLocation program, "uMVMatrix"
+  program.nMatrixUniform = gl.getUniformLocation program, "uNMatrix"
+
+  program.samplerUniform = gl.getUniformLocation program, "uSampler"
+  program.useTextureUniform = gl.getUniformLocation program, "uUseTexture"
+
+  program.lightDirectionUniform = gl.getUniformLocation program, "uLightDirection"
+  program.ambientColorUniform = gl.getUniformLocation program, "uAmbientColor"
+  program.directionalColorUniform = gl.getUniformLocation program, "uDirectionalColor"
 
   return program
 

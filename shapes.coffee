@@ -15,17 +15,13 @@ class Shape
     gl.bindTexture gl.TEXTURE_2D, null
     @texture.loaded = true
 
-  draw: (gl,pMatrix,mMatrix,color_shader,texture_shader) ->
+  draw: (gl,pMatrix,mMatrix,shader) ->
     @position mMatrix
 
-    shader = null
+    gl.useProgram shader
 
     if @texture
-      shader = texture_shader
-      gl.useProgram shader
-
-      gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
-      gl.vertexAttribPointer shader.vertexTextureAttribute, @texture_coord.itemSize, gl.FLOAT, false, 0, 0
+      gl.uniform1i shader.useTextureUniform, 1
 
       if @texture.loaded
         gl.activeTexture gl.TEXTURE0
@@ -33,17 +29,37 @@ class Shape
         gl.uniform1i shader.samplerUniform, 0
 
     else
-      shader = color_shader
-      gl.useProgram shader
+      gl.uniform1i shader.useTextureUniform, 0
 
-      gl.bindBuffer gl.ARRAY_BUFFER, @colors
-      gl.vertexAttribPointer shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
+    if not @texture_coord
+      @texture_coord = gl.createBuffer()
+      gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
+      @texture_coord.js = []
+      @texture_coord.js.push( 0 ) for [ 1 .. 2 * @vertices.numItems ]
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @texture_coord.js ), gl.STATIC_DRAW
+      @texture_coord.itemSize = 2
+      @texture_coord.numItems = @texture_coord.js.length / @texture_coord.itemSize
+      
+    gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
+    gl.vertexAttribPointer shader.vertexTextureAttribute, @texture_coord.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @colors
+    gl.vertexAttribPointer shader.vertexColorAttribute, @colors.itemSize, gl.FLOAT, false, 0, 0
 
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
     gl.vertexAttribPointer shader.vertexPositionAttribute, @vertices.itemSize, gl.FLOAT, false, 0, 0
 
+    gl.bindBuffer gl.ARRAY_BUFFER, @normals
+    gl.vertexAttribPointer shader.vertexNormalAttribute, @normals.itemSize, gl.FLOAT, false, 0, 0
+
     gl.uniformMatrix4fv shader.pMatrixUniform, false, pMatrix
     gl.uniformMatrix4fv shader.mvMatrixUniform, false, mMatrix
+
+    normalMatrix = mat3.create()
+    mat4.toInverseMat3 mMatrix, normalMatrix
+    mat3.transpose normalMatrix
+
+    gl.uniformMatrix3fv shader.nMatrixUniform, false, normalMatrix
 
     if @index
       gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
@@ -150,6 +166,32 @@ class Pyramid extends Shape
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
     @vertices.itemSize = 3
     @vertices.numItems = @vertices.js.length / @vertices.itemSize
+
+    @normals = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @normals
+    div = 1 / Math.sqrt( 5 )
+    @normals.js =
+      [
+         # Front
+         0, 1 * div, 2 * div,
+         0, 1 * div, 2 * div,
+         0, 1 * div, 2 * div,
+         # Right
+         2 * div, 1 * div, 0,
+         2 * div, 1 * div, 0,
+         2 * div, 1 * div, 0,
+         # Back
+         0, 1 * div, -2 * div,
+         0, 1 * div, -2 * div,
+         0, 1 * div, -2 * div,
+         # Left
+         -2 * div, 1 * div, 0,
+         -2 * div, 1 * div, 0,
+         -2 * div, 1 * div, 0,
+      ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normals.js ), gl.STATIC_DRAW
+    @normals.itemSize = 3
+    @normals.numItems = @normals.js.length / @normals.itemSize
   
     @colors = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @colors
@@ -225,6 +267,45 @@ class Cube extends Shape
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
     @vertices.itemSize = 3
     @vertices.numItems = @vertices.js.length / @vertices.itemSize
+
+    @normals = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @normals
+    @normals.js =
+      [
+        # Front
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
+        # Back
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+        # Right
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+        # Left
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+        # Top
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
+        # Bottom
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+      ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normals.js ), gl.STATIC_DRAW
+    @normals.itemSize = 3
+    @normals.numItems = @normals.js.length / @normals.itemSize
   
     @colors = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @colors
