@@ -6,7 +6,7 @@ COFFEE=code.coffee
 JS=$(patsubst %.coffee,%.js,$(COFFEE)) $(EXT_JS)
 HTML=index.html
 
-all: html js $(OUT)/nehe.gif
+all: html js
 
 html: $(addprefix $(OUT)/,$(HTML))
 js: $(addprefix $(OUT)/,$(JS)) 
