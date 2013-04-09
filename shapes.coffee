@@ -467,26 +467,28 @@ class Terrain extends Shape
       for i in [ 0 .. canvas.width - 1 ]
         for j in [ 0 .. canvas.height - 1 ]
           height = heights[i][j]
-          @vertices.js.push i - canvas.width / 4, heights[i][j], -j
+          @vertices.js.push i, heights[i][j], j
 
           prev_i = if i > 0 then i - 1 else i
           next_i = if i < canvas.width - 1 then i + 1 else i
           prev_j = if j > 0 then j - 1 else j
           next_j = if j < canvas.height - 1 then j + 1 else j
 
-          vec_di = [ next_i - prev_i, 0, heights[next_i][j] - heights[prev_i][j] ]
-          vec_dj = [ 0, next_j - prev_j, heights[i][next_j] - heights[i][prev_j] ]
+          vec_di = vec3.create [ next_i - prev_i, heights[next_i][j] - heights[prev_i][j], 0 ]
+          vec_dj = vec3.create [ 0, heights[i][next_j] - heights[i][prev_j], -(next_j - prev_j) ]
 
-          @normals.js.push vec_di[1] * vec_dj[2] - vec_di[2] * vec_dj[1] # x( di x dj )
-          @normals.js.push -vec_di[0] * vec_dj[2] + vec_di[2] * vec_dj[0] # y( di x dj ) 
-          @normals.js.push vec_di[0] * vec_dj[1] - vec_di[1] * vec_dj[0] # z( di x dj )
+          normal = vec3.create()
+          vec3.cross vec_di, vec_dj, normal
+          vec3.normalize normal
+
+          @normals.js.push normal[0], normal[1], normal[2]
 
           if height > 10
             @colors.js.push 1, 1, 1, 1 # White
           else if height > 2
-            @colors.js.push 0.25, 0.6, 0.04, 1 # Green? 
+            @colors.js.push 0.25, 0.6, 0.04, 1 # Green
           else
-            @colors.js.push 0.35, 0.25, 0.10, 1 # Brown?
+            @colors.js.push 0.30, 0.20, 0.08, 1 # Brown
 
           if i < canvas.width - 1 && j < canvas.height - 1
             base = i * canvas.height + j
@@ -503,16 +505,16 @@ class Terrain extends Shape
       @normals.itemSize = 3
       @normals.numItems = @normals.js.length / @normals.itemSize
 
+      gl.bindBuffer gl.ARRAY_BUFFER, @colors
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
+      @colors.itemSize = 4
+      @colors.numItems = @colors.js.length / @colors.itemSize
+
       gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
       gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( @index.js ), gl.STATIC_DRAW
       @index.itemSize = 1
       @index.numItems = @index.js.length / @index.itemSize
       @index.type = gl.UNSIGNED_SHORT
-
-      gl.bindBuffer gl.ARRAY_BUFFER, @colors
-      gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
-      @colors.itemSize = 4
-      @colors.numItems = @colors.js.length / @colors.itemSize
 
       @drawtype = gl.TRIANGLES
 

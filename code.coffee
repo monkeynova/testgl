@@ -42,7 +42,7 @@ $ ->
       return
 
     gl.enable gl.DEPTH_TEST
-    gl.clearColor 0.1, 0.1, 0.1, 1
+    gl.clearColor 0.5, 0.8, 1, 1
 
     #gl.blendFunc gl.SRC_ALPHA, gl.ONE
     #gl.enable gl.BLEND;
@@ -58,7 +58,7 @@ $ ->
     cube_center = [ 1.5, 1, -7 ]
     shapes.push( new TextureCube gl, cube_center, texture_data_url )
 
-    terrain_center = [ 0, 0, 0 ]
+    terrain_center = [ -64, -5, -128 ]
     shapes.push( new Terrain gl, terrain_center, terrain_data_url )
 
     document.onkeydown = (e) -> keyboard[ e.keyCode ] = 1
@@ -121,10 +121,10 @@ $ ->
     angularSpeed = 0.03
 
     if keyboard[87] # 'w'
-      camera.posX -= linearSpeed * Math.sin( camera.yaw )
+      camera.posX += linearSpeed * Math.sin( camera.yaw )
       camera.posZ -= linearSpeed * Math.cos( camera.yaw )
     if keyboard[83] # 's'
-      camera.posX += linearSpeed * Math.sin( camera.yaw )
+      camera.posX -= linearSpeed * Math.sin( camera.yaw )
       camera.posZ += linearSpeed * Math.cos( camera.yaw )
     if keyboard[65] # 'a'
       if keyboard[16] # shift
