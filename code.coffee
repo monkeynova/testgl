@@ -12,11 +12,14 @@ $ ->
   startDate = null
   paused = 0
 
+  camera = {}
   shapes = []
   pMatrix = null
   mMatrix = null
 
   matrixStack = []
+
+  keyboard = []
 
   status = ( str ) ->
     status_box.empty()
@@ -54,6 +57,12 @@ $ ->
     cube_center = [ 1.5, 0, -7 ]
     shapes.push( new TextureCube gl, cube_center, texture_data_url )
 
+    document.onkeydown = (e) -> keyboard[ e.keyCode ] = 1
+    document.onkeyup = (e) -> keyboard[ e.keyCode ] = 0
+
+    camera.posX = camera.posY = camera.posZ = 0
+    camera.yaw = camera.pitch = 0
+
     status 'Initialized...'
     render()
 
@@ -74,10 +83,14 @@ $ ->
     tick_time.push( now );
     tick_time.shift() while tick_time.length > 100
 
-    gl.useProgram program
-    gl.uniform3f program.uniforms["uLightDirection"], -1, 1, 1
-    gl.uniform3f program.uniforms["uAmbientColor"], 0, 0, 0
-    gl.uniform3f program.uniforms["uDirectionalColor"], 1, 1, 1
+    addLighting program
+    updateInput camera, keyboard
+
+    pushMatrix mMatrix
+
+    mat4.rotate mMatrix, camera.pitch, [ 1, 0, 0 ]
+    mat4.rotate mMatrix, camera.yaw, [ 0, 1, 0 ]
+    mat4.translate mMatrix, [ -camera.posX, -camera.posY, -camera.posZ ]
 
     for s in shapes
       s.update elapsed
@@ -85,6 +98,8 @@ $ ->
       pushMatrix mMatrix
       s.draw gl, pMatrix, mMatrix, program
       popMatrix mMatrix
+
+    popMatrix mMatrix
 
     fps = Math.floor(ticks  / elapsed)
     if ticks > 100
@@ -94,6 +109,39 @@ $ ->
     status 'Running... fps=' + fps
 
     requestAnimFrame render
+
+  updateInput = (camera,keyboard) ->
+    linearSpeed = 0.05
+    angularSpeed = 0.03
+
+    if keyboard[87] # 'w'
+      camera.posX -= linearSpeed * Math.sin( camera.yaw )
+      camera.posZ -= linearSpeed * Math.cos( camera.yaw )
+    if keyboard[83] # 's'
+      camera.posX += linearSpeed * Math.sin( camera.yaw )
+      camera.posZ += linearSpeed * Math.cos( camera.yaw )
+    if keyboard[65] # 'a'
+      if keyboard[16] # shift
+        camera.posX -= linearSpeed * Math.cos( camera.yaw )
+        camera.posZ -= linearSpeed * Math.sin( camera.yaw )
+      else
+        camera.yaw -=angularSpeed
+    if keyboard[68] # 'd'
+      if keyboard[16] # shift
+        camera.posX += linearSpeed * Math.cos( camera.yaw )
+        camera.posZ += linearSpeed * Math.sin( camera.yaw )
+      else
+        camera.yaw +=angularSpeed
+    if keyboard[69] # 'e'
+      camera.pitch -= angularSpeed
+    if keyboard[81] # 'q'
+      camera.pitch += angularSpeed
+
+  addLighting = (program) ->
+    gl.useProgram program
+    gl.uniform3f program.uniforms["uLightDirection"], -1, 1, 1
+    gl.uniform3f program.uniforms["uAmbientColor"], 0, 0, 0
+    gl.uniform3f program.uniforms["uDirectionalColor"], 1, 1, 1
 
   reshape = ->
     return if canvas.clientWidth == canvas.width && canvas.clientHeight == canvas.height
