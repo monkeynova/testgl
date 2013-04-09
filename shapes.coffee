@@ -66,7 +66,7 @@ class Shape
 
     if @index
       gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
-      gl.drawElements @drawtype, @index.numItems, gl.UNSIGNED_SHORT, 0
+      gl.drawElements @drawtype, @index.numItems, @index.type, 0
     else
       gl.drawArrays @drawtype, 0, @vertices.numItems
 
@@ -364,6 +364,7 @@ class Cube extends Shape
     gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( @index.js ), gl.STATIC_DRAW
     @index.itemSize = 1
     @index.numItems = @index.js.length / @index.itemSize
+    @index.type = gl.UNSIGNED_SHORT
 
     @drawtype = gl.TRIANGLES
 
@@ -424,3 +425,100 @@ class TextureCube extends Cube
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @texture_coord.js ), gl.STATIC_DRAW
     @texture_coord.itemSize = 2
     @texture_coord.numItems = @texture_coord.js.length / @texture_coord.itemSize    
+
+class Terrain extends Shape
+    constructor: (gl,center,terrain_image_url) ->
+      super gl, center
+
+      shape = this
+
+      @initialized = false
+
+      @terrain_image = new Image()
+      @terrain_image.onload = -> shape.buildTerrain( gl )
+      @terrain_image.src = terrain_image_url
+
+    buildTerrain: (gl) ->
+      canvas = document.createElement 'canvas'
+      canvas.width = Math.min @terrain_image.width, 256
+      canvas.height = Math.min @terrain_image.height, 256
+      context = canvas.getContext( '2d' )
+      context.drawImage( @terrain_image, 0, 0 )
+
+      @vertices = gl.createBuffer()
+      @vertices.js = []
+
+      @normals = gl.createBuffer()
+      @normals.js = []
+
+      @colors = gl.createBuffer()
+      @colors.js = []
+
+      @index = gl.createBuffer()
+      @index.js = []
+
+      heights = []
+
+      for i in [ 0 .. canvas.width - 1 ]
+        heights[i] = []
+        for j in [ 0 .. canvas.height - 1 ]
+          heights[i][j] = context.getImageData( i, j, 1, 1 ).data[0] / 16
+
+      for i in [ 0 .. canvas.width - 1 ]
+        for j in [ 0 .. canvas.height - 1 ]
+          height = heights[i][j]
+          @vertices.js.push i - canvas.width / 4, heights[i][j], -j
+
+          prev_i = if i > 0 then i - 1 else i
+          next_i = if i < canvas.width - 1 then i + 1 else i
+          prev_j = if j > 0 then j - 1 else j
+          next_j = if j < canvas.height - 1 then j + 1 else j
+
+          vec_di = [ next_i - prev_i, 0, heights[next_i][j] - heights[prev_i][j] ]
+          vec_dj = [ 0, next_j - prev_j, heights[i][next_j] - heights[i][prev_j] ]
+
+          @normals.js.push vec_di[1] * vec_dj[2] - vec_di[2] * vec_dj[1] # x( di x dj )
+          @normals.js.push -vec_di[0] * vec_dj[2] + vec_di[2] * vec_dj[0] # y( di x dj ) 
+          @normals.js.push vec_di[0] * vec_dj[1] - vec_di[1] * vec_dj[0] # z( di x dj )
+
+          if height > 10
+            @colors.js.push 1, 1, 1, 1 # White
+          else if height > 2
+            @colors.js.push 0.25, 0.6, 0.04, 1 # Green? 
+          else
+            @colors.js.push 0.35, 0.25, 0.10, 1 # Brown?
+
+          if i < canvas.width - 1 && j < canvas.height - 1
+            base = i * canvas.height + j
+            @index.js.push base, base + 1, base + canvas.height
+            @index.js.push base + canvas.height, base + 1, base + canvas.height + 1
+
+      gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
+      @vertices.itemSize = 3
+      @vertices.numItems = @vertices.js.length / @vertices.itemSize
+
+      gl.bindBuffer gl.ARRAY_BUFFER, @normals
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normals.js ), gl.STATIC_DRAW
+      @normals.itemSize = 3
+      @normals.numItems = @normals.js.length / @normals.itemSize
+
+      gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
+      gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( @index.js ), gl.STATIC_DRAW
+      @index.itemSize = 1
+      @index.numItems = @index.js.length / @index.itemSize
+      @index.type = gl.UNSIGNED_SHORT
+
+      gl.bindBuffer gl.ARRAY_BUFFER, @colors
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
+      @colors.itemSize = 4
+      @colors.numItems = @colors.js.length / @colors.itemSize
+
+      @drawtype = gl.TRIANGLES
+
+      @initialized = true
+
+    draw: (gl,pMatrix,mMatrix,shader) ->
+      return if ! @initialized
+
+      super gl, pMatrix, mMatrix, shader

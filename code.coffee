@@ -1,7 +1,8 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 #=require <shaders.coffee>
 #=require <shapes.coffee>
-#=require <texture.coffee>
+#=require <texture.dataurl.coffee>
+#=require <terrain.dataurl.coffee>
 
 $ ->
   canvas = document.getElementById 'viewport'
@@ -51,16 +52,21 @@ $ ->
 
     startDate = new Date()
 
-    pyramid_center = [ -1.5, 0, -7 ]
+    pyramid_center = [ -1.5, 1, -7 ]
     shapes.push( new Pyramid gl, pyramid_center )
 
-    cube_center = [ 1.5, 0, -7 ]
+    cube_center = [ 1.5, 1, -7 ]
     shapes.push( new TextureCube gl, cube_center, texture_data_url )
+
+    terrain_center = [ 0, 0, 0 ]
+    shapes.push( new Terrain gl, terrain_center, terrain_data_url )
 
     document.onkeydown = (e) -> keyboard[ e.keyCode ] = 1
     document.onkeyup = (e) -> keyboard[ e.keyCode ] = 0
 
-    camera.posX = camera.posY = camera.posZ = 0
+    camera.posX = 0
+    camera.posY = 2
+    camera.posZ = 0
     camera.yaw = camera.pitch = 0
 
     status 'Initialized...'

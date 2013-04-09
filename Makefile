@@ -26,14 +26,15 @@ $(OUT)/%.html: %.jade
 
 $(OUT)/index.html: shader.frag shader.vert
 
-$(GENERATED)/code.coffee: code.coffee shaders.coffee shapes.coffee $(GENERATED)/texture.coffee
+$(GENERATED)/code.coffee: code.coffee shaders.coffee shapes.coffee \
+			  $(GENERATED)/texture.dataurl.coffee $(GENERATED)/terrain.dataurl.coffee
 	@mkdir -p $(@D)
 	coffeescript-concat -I . -I $(GENERATED) -o $@.tmp $<
 	mv $@.tmp $@
 
-$(GENERATED)/texture.coffee: texture.png dataurl.coffee
+$(GENERATED)/%.dataurl.coffee: %.png dataurl.coffee
 	@mkdir -p $(@D)
-	coffee ./dataurl.coffee texture_data_url texture.png > $@.tmp
+	coffee ./dataurl.coffee $(patsubst %.png,%,$(<F))_data_url $< > $@.tmp
 	mv $@.tmp $@
 
 $(OUT)/%.js: $(GENERATED)/%.coffee
