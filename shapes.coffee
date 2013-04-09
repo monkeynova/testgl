@@ -435,16 +435,29 @@ class Terrain extends Shape
       @initialized = false
 
       @terrain_image = new Image()
-      @terrain_image.onload = -> shape.buildTerrain( gl )
+      @terrain_image.onload = ->
+        shape.buildHeight()
+        shape.initialize( gl )
       @terrain_image.src = terrain_image_url
 
-    buildTerrain: (gl) ->
+    buildHeight: ->
       canvas = document.createElement 'canvas'
       canvas.width = Math.min @terrain_image.width, 256
       canvas.height = Math.min @terrain_image.height, 256
       context = canvas.getContext( '2d' )
       context.drawImage( @terrain_image, 0, 0 )
 
+      @width = canvas.width
+      @height = canvas.height
+      @heights = []
+
+      for i in [ 0 .. canvas.width - 1 ]
+        @heights[i] = []
+        for j in [ 0 .. canvas.height - 1 ]
+          @heights[i][j] = context.getImageData( i, j, 1, 1 ).data[0] / 16
+
+
+    initialize: (gl) ->
       @vertices = gl.createBuffer()
       @vertices.js = []
 
@@ -457,25 +470,18 @@ class Terrain extends Shape
       @index = gl.createBuffer()
       @index.js = []
 
-      heights = []
-
-      for i in [ 0 .. canvas.width - 1 ]
-        heights[i] = []
-        for j in [ 0 .. canvas.height - 1 ]
-          heights[i][j] = context.getImageData( i, j, 1, 1 ).data[0] / 16
-
-      for i in [ 0 .. canvas.width - 1 ]
-        for j in [ 0 .. canvas.height - 1 ]
-          height = heights[i][j]
-          @vertices.js.push i, heights[i][j], j
+      for i in [ 0 .. @width - 1 ]
+        for j in [ 0 .. @height - 1 ]
+          height = @heights[i][j]
+          @vertices.js.push i, @heights[i][j], j
 
           prev_i = if i > 0 then i - 1 else i
-          next_i = if i < canvas.width - 1 then i + 1 else i
+          next_i = if i < @width - 1 then i + 1 else i
           prev_j = if j > 0 then j - 1 else j
-          next_j = if j < canvas.height - 1 then j + 1 else j
+          next_j = if j < @height - 1 then j + 1 else j
 
-          vec_di = vec3.create [ next_i - prev_i, heights[next_i][j] - heights[prev_i][j], 0 ]
-          vec_dj = vec3.create [ 0, heights[i][next_j] - heights[i][prev_j], -(next_j - prev_j) ]
+          vec_di = vec3.create [ next_i - prev_i, @heights[next_i][j] - @heights[prev_i][j], 0 ]
+          vec_dj = vec3.create [ 0, @heights[i][next_j] - @heights[i][prev_j], -(next_j - prev_j) ]
 
           normal = vec3.create()
           vec3.cross vec_di, vec_dj, normal
@@ -490,10 +496,10 @@ class Terrain extends Shape
           else
             @colors.js.push 0.30, 0.20, 0.08, 1 # Brown
 
-          if i < canvas.width - 1 && j < canvas.height - 1
-            base = i * canvas.height + j
-            @index.js.push base, base + 1, base + canvas.height
-            @index.js.push base + canvas.height, base + 1, base + canvas.height + 1
+          if i < @width - 1 && j < @height - 1
+            base = i * @height + j
+            @index.js.push base, base + 1, base + @height
+            @index.js.push base + @height, base + 1, base + @height + 1
 
       gl.bindBuffer gl.ARRAY_BUFFER, @vertices
       gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
