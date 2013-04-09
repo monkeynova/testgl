@@ -16,6 +16,8 @@ $ ->
   pMatrix = null
   mMatrix = null
 
+  matrixStack = []
+
   status = ( str ) ->
     status_box.empty()
     status_box.append str
@@ -23,13 +25,12 @@ $ ->
   pushMatrix = ( m ) ->
     new_m = mat4.create()
     mat4.set m, new_m
-    m.stack = [] if ! m.stack
-    new_m.stack = m.stack
-    m.stack.push new_m
+    matrixStack[m] = [] if not matrixStack[m]
+    matrixStack[m].push new_m
 
   popMatrix = ( m ) ->
-    throw "invalid pop" if m.stack.length <= 0
-    mat4.set m.stack.pop(), m
+    throw "invalid pop" if ! matrixStack[m] or matrixStack[m].length <= 0
+    mat4.set matrixStack[m].pop(), m
 
   initialize = ->
     if ! gl
