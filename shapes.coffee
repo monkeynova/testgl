@@ -192,7 +192,6 @@ class JSONModel extends Shape
 
       @model = data
 
-      console.log @model.vertices
       @vertices = @buildBuffer gl, @model.vertices
 
       if ! @model.colors
@@ -200,7 +199,6 @@ class JSONModel extends Shape
         for v in @model.vertices
           @model.colors.push [ 1, 1, 1, 1 ]
 
-      console.log @model.colors
       @colors = @buildBuffer gl, @model.colors
 
       if ! @model.triangles
@@ -208,7 +206,6 @@ class JSONModel extends Shape
         for v in [ 0 .. @model.vertices.length / 3 ]
           @model.triangles.push [ 3 * v, 3 * v + 1, 3 * v + 2 ]
 
-      console.log @model.triangles
       @index = @buildElementBuffer gl, @model.triangles
 
       if ! @model.normals
@@ -228,7 +225,6 @@ class JSONModel extends Shape
           @model.normals.push [ normal[0], normal[1], normal[2] ]
           @model.normals.push [ normal[0], normal[1], normal[2] ]
 
-      console.log @model.normals
       @normals = @buildBuffer gl, @model.normals
 
       @drawtype = gl.TRIANGLES
