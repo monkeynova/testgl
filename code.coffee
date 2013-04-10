@@ -58,13 +58,13 @@ $ ->
     pyramid_center = [ -1.5, 1, -7 ]
     #shapes.push( new Pyramid gl, pyramid_center )
     pyramid = new JSONModel gl, pyramid_center, pyramid_model_data_url
-#    pyramid.animate 1/3, [ 0, 1, 0 ]
+    pyramid.animate 1/3, [ 0, 1, 0 ]
     shapes.push pyramid
 
     cube_center = [ 1.5, 1, -7 ]
     #shapes.push( new TextureCube gl, cube_center, texture_data_url )
     cube = new JSONModel gl, cube_center, cube_model_data_url
-#    cube.animate 1/10, [ 1, 1, 1 ]
+    cube.animate 1/10, [ 1, 1, 1 ]
     shapes.push cube
 
     terrain_center = [ -64, -5, -128 ]
@@ -94,7 +94,6 @@ $ ->
     elapsed = if lastRenderDate then (now.getTime() - lastRenderDate.getTime()) / 1000 else 0
     lastRenderDate = now
 
-    addLighting default_shader
     updateInput camera, keyboard
 
     pushMatrix mMatrix
@@ -102,6 +101,8 @@ $ ->
     mat4.rotate mMatrix, camera.pitch, [ 1, 0, 0 ]
     mat4.rotate mMatrix, camera.yaw, [ 0, 1, 0 ]
     mat4.translate mMatrix, [ -camera.posX, -camera.posY, -camera.posZ ]
+
+    addLighting default_shader, mMatrix
 
     for s in shapes
       s.update elapsed
@@ -147,11 +148,11 @@ $ ->
     if keyboard[81] # 'q'
       camera.pitch += angularSpeed
 
-  addLighting = (program) ->
+   addLighting = (program,mMatrix) ->
     gl.useProgram program
-    gl.uniform3f program.uniforms["uLightDirection"], -1, 1, 1
-    gl.uniform3f program.uniforms["uAmbientColor"], 0, 0, 0
-    gl.uniform3f program.uniforms["uDirectionalColor"], 1, 1, 1
+    gl.uniform3f program.uniforms["uLightPosition"], 10, 10, 10
+    gl.uniform3f program.uniforms["uAmbientColor"], 0.3, 0.3, 0.3
+    gl.uniform3f program.uniforms["uDirectionalColor"], 0.7, 0.7, 0.7
 
   reshape = ->
     return if canvas.clientWidth == canvas.width && canvas.clientHeight == canvas.height

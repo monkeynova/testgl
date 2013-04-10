@@ -3,9 +3,10 @@ class Shape
   constructor: (gl,center) ->
     @center = center
     @initialized = true
-    @shouldDrawNormals = true
+    @shouldDrawNormals = false
 
   position: (m) ->
+    mat4.translate m, @center
     mat4.rotate m, @angle, @axis if @axis
 
   update: (elapsed) ->
@@ -28,8 +29,6 @@ class Shape
   draw: (gl,pMatrix,mMatrix,shader,wire_shader) ->
     return if ! @initialized
 
-    mat4.translate mMatrix, @center
-  
     @position mMatrix
 
     gl.useProgram shader
@@ -88,18 +87,20 @@ class Shape
         @normal_points = gl.createBuffer()
         @normal_points.js = []
         for i in [ 0 .. @vertices.numItems ]
-          @normal_points.js.push @vertices.js[i]
-          @normal_points.js.push @vertices.js[i+1]
-          @normal_points.js.push @vertices.js[i+2]
-          @normal_points.js.push @vertices.js[i]   + @normals.js[i] * 0.1
-          @normal_points.js.push @vertices.js[i+1] + @normals.js[i+1] * 0.1
-          @normal_points.js.push @vertices.js[i+2] + @normals.js[i+2] * 0.1
+          @normal_points.js.push @vertices.js[3*i]
+          @normal_points.js.push @vertices.js[3*i+1]
+          @normal_points.js.push @vertices.js[3*i+2]
+          @normal_points.js.push @vertices.js[3*i]   + @normals.js[3*i] * 0.1
+          @normal_points.js.push @vertices.js[3*i+1] + @normals.js[3*i+1] * 0.1
+          @normal_points.js.push @vertices.js[3*i+2] + @normals.js[3*i+2] * 0.1
         gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
         gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normal_points.js ), gl.STATIC_DRAW
         @normal_points.itemSize = 3
         @normal_points.numItems = @normal_points.js.length / @normal_points.itemSize
 
       gl.useProgram wire_shader
+
+      gl.uniform4f wire_shader.uniforms["uAmbientColor"], 1, 1, 1, 1
 
       gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
       gl.vertexAttribPointer wire_shader.attributes["aVertexPosition"], @normal_points.itemSize, gl.FLOAT, false, 0, 0
@@ -108,6 +109,7 @@ class Shape
       gl.uniformMatrix4fv wire_shader.uniforms["uMVMatrix"], false, mMatrix
 
       gl.drawArrays gl.LINES, 0, @normal_points.numItems
+
 
 class Triangle extends Shape        
   constructor: (gl,center) ->
