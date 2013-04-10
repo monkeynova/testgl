@@ -1,20 +1,27 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-program = null
+default_shader = null
+wire_shader = null
 
 initShaders = (gl) ->
-  fragmentShader = getShader gl, 'shader-fs'
-  vertexShader = getShader gl, 'shader-vs'
+  default_shader = initNamedShader gl, 'shader'
+  wire_shader = initNamedShader gl, 'wire'
 
-  program = gl.createProgram()
-  gl.attachShader program, vertexShader
-  gl.attachShader program, fragmentShader
-  gl.linkProgram program
+initNamedShader = (gl,shader_name) ->
+  shader = null
 
-  if ( ! gl.getProgramParameter program, gl.LINK_STATUS )
+  fragmentShader = getShader gl, shader_name + '-fs'
+  vertexShader = getShader gl, shader_name + '-vs'
+
+  shader = gl.createProgram()
+  gl.attachShader shader, vertexShader
+  gl.attachShader shader, fragmentShader
+  gl.linkProgram shader
+
+  if ( ! gl.getProgramParameter shader, gl.LINK_STATUS )
     status 'Shader link failed'
     return;
 
-  gl.useProgram program
+  gl.useProgram shader
 
   attribute_names =
     [
@@ -24,12 +31,14 @@ initShaders = (gl) ->
       "aTextureCoord",
     ]
 
-  program.attributes = []
+  shader.attributes = []
 
   for name in attribute_names
-    program.attributes[name] = gl.getAttribLocation program, name
-    gl.enableVertexAttribArray program.attributes[name]
-    console.log name + "=" + program.attributes[name]        
+    location = gl.getAttribLocation shader, name
+    if location >= 0
+      shader.attributes[name] = location
+      gl.enableVertexAttribArray shader.attributes[name]
+      console.log shader_name + ": " + name + "=" + shader.attributes[name]        
 
   uniform_names =
     [
@@ -43,12 +52,12 @@ initShaders = (gl) ->
       "uDirectionalColor",
     ]
 
-  program.uniforms = []
+  shader.uniforms = []
 
   for name in uniform_names
-    program.uniforms[name] = gl.getUniformLocation program, name
+    shader.uniforms[name] = gl.getUniformLocation shader, name
 
-  return program
+  return shader
 
 getShader = (gl, id) ->
   shaderScript = document.getElementById id

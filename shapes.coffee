@@ -3,10 +3,18 @@ class Shape
   constructor: (gl,center) ->
     @center = center
     @initialized = true
-
-  update: (elapsed) ->
+    @shouldDrawNormals = true
 
   position: (m) ->
+    mat4.rotate m, @angle, @axis if @axis
+
+  update: (elapsed) ->
+    @angle += @angle_speed * elapsed
+
+  animate: (rotations_per_second ,axis) ->
+    @angle = 0
+    @angle_speed = 2 * Math.PI * rotations_per_second
+    @axis = axis
 
   initTexture: (gl) ->
     gl.bindTexture gl.TEXTURE_2D, @texture
@@ -17,7 +25,7 @@ class Shape
     gl.bindTexture gl.TEXTURE_2D, null
     @texture.loaded = true
 
-  draw: (gl,pMatrix,mMatrix,shader) ->
+  draw: (gl,pMatrix,mMatrix,shader,wire_shader) ->
     return if ! @initialized
 
     mat4.translate mMatrix, @center
@@ -73,6 +81,34 @@ class Shape
     else
       gl.drawArrays @drawtype, 0, @vertices.numItems
 
+    @drawNormals gl, mMatrix, pMatrix, wire_shader if @shouldDrawNormals
+
+  drawNormals: (gl,mMatrix,pMatrix,wire_shader) ->
+      if ! @normal_points
+        @normal_points = gl.createBuffer()
+        @normal_points.js = []
+        for i in [ 0 .. @vertices.numItems ]
+          @normal_points.js.push @vertices.js[i]
+          @normal_points.js.push @vertices.js[i+1]
+          @normal_points.js.push @vertices.js[i+2]
+          @normal_points.js.push @vertices.js[i]   + @normals.js[i] * 0.1
+          @normal_points.js.push @vertices.js[i+1] + @normals.js[i+1] * 0.1
+          @normal_points.js.push @vertices.js[i+2] + @normals.js[i+2] * 0.1
+        gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
+        gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normal_points.js ), gl.STATIC_DRAW
+        @normal_points.itemSize = 3
+        @normal_points.numItems = @normal_points.js.length / @normal_points.itemSize
+
+      gl.useProgram wire_shader
+
+      gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
+      gl.vertexAttribPointer wire_shader.attributes["aVertexPosition"], @normal_points.itemSize, gl.FLOAT, false, 0, 0
+
+      gl.uniformMatrix4fv wire_shader.uniforms["uPMatrix"], false, pMatrix
+      gl.uniformMatrix4fv wire_shader.uniforms["uMVMatrix"], false, mMatrix
+
+      gl.drawArrays gl.LINES, 0, @normal_points.numItems
+
 class Triangle extends Shape        
   constructor: (gl,center) ->
     super gl, center
@@ -87,7 +123,6 @@ class Triangle extends Shape
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
     @vertices.itemSize = 3
     @vertices.numItems = @vertices.js.length / @vertices.itemSize
-    @vertices.numItems = 3
   
     @colors = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @colors
@@ -102,12 +137,6 @@ class Triangle extends Shape
     @colors.numItems = @colors.js.length / @colors.itemSize
 
     @drawtype = gl.TRIANGLES
-
-  position: (m) ->
-    mat4.rotate m, @angle, [ 0, 1, 0 ]
-
-  update: (elapsed) ->
-    @angle = 2 * Math.PI * elapsed / 3
 
 class Square extends Shape        
   constructor: (gl,center) ->
@@ -139,12 +168,6 @@ class Square extends Shape
     @colors.numItems = @colors.js.length / @colors.itemSize
 
     @drawtype = gl.TRIANGLE_STRIP
-
-  update: (elapsed) ->
-    @angle = 2 * Math.PI * elapsed / 5
-
-  position: (m) ->
-    mat4.rotate m, @angle, [ 1, 0, 0 ]
 
 class JSONModel extends Shape
   constructor: (gl,center,model_url) ->
@@ -312,12 +335,6 @@ class Pyramid extends Shape
 
     @drawtype = gl.TRIANGLES
 
-  position: (m) ->
-    mat4.rotate m, @angle, [ 0, 1, 0 ]
-
-  update: (elapsed) ->
-    @angle = 2 * Math.PI * elapsed / 3
-
 class Cube extends Shape        
   constructor: (gl,center) ->
     super gl, center
@@ -454,12 +471,6 @@ class Cube extends Shape
     @index.numItems = @index.js.length / @index.itemSize
 
     @drawtype = gl.TRIANGLES
-
-  update: (elapsed) ->
-    @angle = 2 * Math.PI * elapsed / 5
-
-  position: (m) ->
-    mat4.rotate m, @angle, [ 1, 1, 1 ]
 
 
 class TextureCube extends Cube
@@ -612,6 +623,3 @@ class Terrain extends Shape
 
       @initialized = true
 
-    draw: (gl,pMatrix,mMatrix,shader) ->
-
-      super gl, pMatrix, mMatrix, shader

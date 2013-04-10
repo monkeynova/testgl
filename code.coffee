@@ -4,14 +4,16 @@
 #=require <texture.dataurl.coffee>
 #=require <terrain.dataurl.coffee>
 #=require <pyramid.model.dataurl.coffee>
+#=require <cube.model.dataurl.coffee>
 
 $ ->
   canvas = document.getElementById 'viewport'
   status_box = $ '#status'
   gl = canvas.getContext 'experimental-webgl' if canvas.getContext
-  ticks = 0
-  tick_time = []
   startDate = null
+  lastRenderDate = null
+  avg_fps = null
+
   paused = 0
 
   camera = {}
@@ -55,10 +57,15 @@ $ ->
 
     pyramid_center = [ -1.5, 1, -7 ]
     #shapes.push( new Pyramid gl, pyramid_center )
-    shapes.push( new JSONModel gl, pyramid_center, pyramid_model_data_url )
+    pyramid = new JSONModel gl, pyramid_center, pyramid_model_data_url
+#    pyramid.animate 1/3, [ 0, 1, 0 ]
+    shapes.push pyramid
 
     cube_center = [ 1.5, 1, -7 ]
-    shapes.push( new TextureCube gl, cube_center, texture_data_url )
+    #shapes.push( new TextureCube gl, cube_center, texture_data_url )
+    cube = new JSONModel gl, cube_center, cube_model_data_url
+#    cube.animate 1/10, [ 1, 1, 1 ]
+    shapes.push cube
 
     terrain_center = [ -64, -5, -128 ]
     shapes.push( new Terrain gl, terrain_center, terrain_data_url )
@@ -84,14 +91,10 @@ $ ->
     gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
     now = new Date()
+    elapsed = if lastRenderDate then (now.getTime() - lastRenderDate.getTime()) / 1000 else 0
+    lastRenderDate = now
 
-    elapsed = (now.getTime() - startDate.getTime()) / 1000;
-
-    ticks++
-    tick_time.push( now );
-    tick_time.shift() while tick_time.length > 100
-
-    addLighting program
+    addLighting default_shader
     updateInput camera, keyboard
 
     pushMatrix mMatrix
@@ -104,17 +107,16 @@ $ ->
       s.update elapsed
 
       pushMatrix mMatrix
-      s.draw gl, pMatrix, mMatrix, program
+      s.draw gl, pMatrix, mMatrix, default_shader, wire_shader
       popMatrix mMatrix
 
     popMatrix mMatrix
 
-    fps = Math.floor(ticks  / elapsed)
-    if ticks > 100
-      last_100_ticks_elapsed = (now.getTime() - tick_time[0].getTime()) / 1000;
-      fps = Math.floor( 100 / last_100_ticks_elapsed )
+    fps = if elapsed then 1  / elapsed else 0
 
-    status 'Running... fps=' + fps
+    avg_fps = if avg_fps == null then fps else 0.99 * avg_fps + 0.01 * fps
+
+    status 'Running... fps=' + Math.floor( avg_fps )
 
     requestAnimFrame render
 
