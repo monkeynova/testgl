@@ -8,7 +8,8 @@ mime = 'image/png'
 
 fs.readFile filename, (err,data) ->
   if err
-    return console.log( err );
+    process.stderr.write err + "\n"
+    process.exit 1
 
   dataurl = varname + ' = \'data:' + mime + ';base64,'
   dataurl += data.toString( 'base64' )

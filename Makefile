@@ -2,34 +2,23 @@ OUT=build
 GENERATED=.generated
 
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js
-COFFEE=code.coffee
-JS=$(patsubst %.coffee,%.js,$(COFFEE)) $(EXT_JS)
-HTML=index.html
 
-all: html js
-
-html: $(addprefix $(OUT)/,$(HTML))
-js: $(addprefix $(OUT)/,$(JS)) 
+all: $(patsubst %,$(OUT)/%,$(EXT_JS))
 
 clean:
-	rm -rf $(OUT)
+	rm -rf $(OUT) $(GENERATED)
 
 neat:
 	rm -f *~
 	rm -f \#*\#
 	rm -f .\#*
 
-$(OUT)/%.html: %.jade
-	@mkdir -p $(@D)
-	jade -p . < $< > $@.tmp
-	mv $@.tmp $@
+include $(GENERATED)/index.jade.d
+include $(GENERATED)/code.coffee.d
 
-$(OUT)/index.html: shader.frag shader.vert
-
-$(GENERATED)/code.coffee: code.coffee shaders.coffee shapes.coffee \
-			  $(GENERATED)/texture.dataurl.coffee $(GENERATED)/terrain.dataurl.coffee
+$(GENERATED)/%.d: % mkdep.coffee
 	@mkdir -p $(@D)
-	coffeescript-concat -I . -I $(GENERATED) -o $@.tmp $<
+	coffee ./mkdep.coffee $< > $@.tmp
 	mv $@.tmp $@
 
 $(GENERATED)/%.dataurl.coffee: %.png dataurl.coffee
