@@ -2,6 +2,7 @@
 class Shape
   constructor: (gl,center) ->
     @center = center
+    @initialized = true
 
   update: (elapsed) ->
 
@@ -17,6 +18,8 @@ class Shape
     @texture.loaded = true
 
   draw: (gl,pMatrix,mMatrix,shader) ->
+    return if ! @initialized
+
     mat4.translate mMatrix, @center
   
     @position mMatrix
@@ -66,7 +69,7 @@ class Shape
 
     if @index
       gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
-      gl.drawElements @drawtype, @index.numItems, @index.type, 0
+      gl.drawElements @drawtype, @index.numItems, gl.UNSIGNED_SHORT, 0
     else
       gl.drawArrays @drawtype, 0, @vertices.numItems
 
@@ -142,6 +145,95 @@ class Square extends Shape
 
   position: (m) ->
     mat4.rotate m, @angle, [ 1, 0, 0 ]
+
+class JSONModel extends Shape
+  constructor: (gl,center,model_url) ->
+    super gl, center
+
+    shape = this
+
+    @initialized = false
+
+    match = /^data:.*?;base64,(.*)/.exec model_url
+    if match
+      json_data = $.base64.decode( match[1] )
+      @initData gl, $.parseJSON( json_data )
+    else
+      $.getJSON model_url, (data) -> shape.initData gl, data
+
+  flatten: (vec_array) -> $.map vec_array, (n) -> n
+
+  validateData: (date) -> true
+
+  buildBuffer: (gl,js) ->
+    buffer = gl.createBuffer()
+    buffer.itemSize = js[0].length
+    buffer.numItems = js.length
+    buffer.js = @flatten js
+    gl.bindBuffer gl.ARRAY_BUFFER, buffer
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( buffer.js ), gl.STATIC_DRAW
+
+    return buffer
+
+  buildElementBuffer: (gl,js) ->
+    buffer = gl.createBuffer()
+    buffer.itemSize = 1
+    buffer.js = @flatten js
+    buffer.numItems = buffer.js.length
+    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, buffer
+    gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( buffer.js ), gl.STATIC_DRAW
+
+    return buffer
+
+  initData: (gl, data) ->
+      if ! @validateData( data )
+        console.log "invalid data: " + data
+        return
+
+      @model = data
+
+      console.log @model.vertices
+      @vertices = @buildBuffer gl, @model.vertices
+
+      if ! @model.colors
+        @model.colors = []
+        for v in @model.vertices
+          @model.colors.push [ 1, 1, 1, 1 ]
+
+      console.log @model.colors
+      @colors = @buildBuffer gl, @model.colors
+
+      if ! @model.triangles
+        @model.triangles = []
+        for v in [ 0 .. @model.vertices.length / 3 ]
+          @model.triangles.push [ 3 * v, 3 * v + 1, 3 * v + 2 ]
+
+      console.log @model.triangles
+      @index = @buildElementBuffer gl, @model.triangles
+
+      if ! @model.normals
+        @model.normals = []
+        for t in @model.triangles
+          v1 = vec3.create @model.vertices[ t[1] ]
+          v2 = vec3.create @model.vertices[ t[2] ]
+          vec3.subtract v1, @model.vertices[ t[0] ]
+          vec3.subtract v2, @model.vertices[ t[0] ]
+
+          normal = vec3.create()
+          vec3.cross v1, v2, normal
+          vec3.normalize normal
+
+          # Normal for each vertex
+          @model.normals.push [ normal[0], normal[1], normal[2] ]
+          @model.normals.push [ normal[0], normal[1], normal[2] ]
+          @model.normals.push [ normal[0], normal[1], normal[2] ]
+
+      console.log @model.normals
+      @normals = @buildBuffer gl, @model.normals
+
+      @drawtype = gl.TRIANGLES
+
+      @initialized = true
 
 class Pyramid extends Shape        
   constructor: (gl,center) ->
@@ -364,7 +456,6 @@ class Cube extends Shape
     gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( @index.js ), gl.STATIC_DRAW
     @index.itemSize = 1
     @index.numItems = @index.js.length / @index.itemSize
-    @index.type = gl.UNSIGNED_SHORT
 
     @drawtype = gl.TRIANGLES
 
@@ -520,13 +611,11 @@ class Terrain extends Shape
       gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( @index.js ), gl.STATIC_DRAW
       @index.itemSize = 1
       @index.numItems = @index.js.length / @index.itemSize
-      @index.type = gl.UNSIGNED_SHORT
 
       @drawtype = gl.TRIANGLES
 
       @initialized = true
 
     draw: (gl,pMatrix,mMatrix,shader) ->
-      return if ! @initialized
 
       super gl, pMatrix, mMatrix, shader

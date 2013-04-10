@@ -4,11 +4,17 @@
 fs = require 'fs'
 varname = process.argv[2]
 filename = process.argv[3]
-mime = 'image/png'
+if /\.png$/.test filename
+  mime = 'image/png'
+else if /\.js$/.test filename
+  mime = 'application/javascript'
+else
+  console.error "Can't determine mime type"
+  process.exit 1
 
 fs.readFile filename, (err,data) ->
   if err
-    process.stderr.write err + "\n"
+    console.error err
     process.exit 1
 
   dataurl = varname + ' = \'data:' + mime + ';base64,'

@@ -18,12 +18,12 @@ else if /\.coffee$/.test filename
     '$(OUT)/' + jsfile + ': $(GENERATED)/' + filename + "\n" +
     'all: $(OUT)/' + jsfile + "\n"
 else
-  process.stderr.write "don't know how to find dependencies in " + filename + "\n"
+  console.error "don't know how to find dependencies in " + filename
   process.exit 1
 
 fs.readFile filename, (err,data) ->
   if err
-    process.stderr.write err + "\n"
+    console.error err
     process.exit 1
 
   build = outfile + ': ' + filename + ' $(GENERATED)/' + filename + '.d '

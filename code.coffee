@@ -3,6 +3,7 @@
 #=require <shapes.coffee>
 #=require <texture.dataurl.coffee>
 #=require <terrain.dataurl.coffee>
+#=require <pyramid.model.dataurl.coffee>
 
 $ ->
   canvas = document.getElementById 'viewport'
@@ -53,7 +54,8 @@ $ ->
     startDate = new Date()
 
     pyramid_center = [ -1.5, 1, -7 ]
-    shapes.push( new Pyramid gl, pyramid_center )
+    #shapes.push( new Pyramid gl, pyramid_center )
+    shapes.push( new JSONModel gl, pyramid_center, pyramid_model_data_url )
 
     cube_center = [ 1.5, 1, -7 ]
     shapes.push( new TextureCube gl, cube_center, texture_data_url )
