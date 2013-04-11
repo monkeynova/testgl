@@ -3,7 +3,7 @@ GENERATED=.generated
 
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js jquery.base64.js
 
-all: $(patsubst %,$(OUT)/%,$(EXT_JS))
+all: $(patsubst %,$(OUT)/%,$(EXT_JS)) $(OUT)/README.html
 
 clean:
 	rm -rf $(OUT) $(GENERATED)
@@ -15,6 +15,11 @@ neat:
 
 include $(GENERATED)/index.jade.d
 include $(GENERATED)/code.coffee.d
+
+$(OUT)/README.html: README.md
+	@mkdir -p $(@D)
+	coffee ./markdown.coffee $< > $@.tmp
+	mv $@.tmp $@
 
 $(GENERATED)/%.d: % mkdep.coffee
 	@mkdir -p $(@D)
