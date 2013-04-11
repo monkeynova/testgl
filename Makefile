@@ -18,7 +18,7 @@ include $(GENERATED)/code.coffee.d
 
 $(OUT)/README.html: README.md
 	@mkdir -p $(@D)
-	coffee ./markdown.coffee $< > $@.tmp
+	marked --gfm $< > $@.tmp
 	mv $@.tmp $@
 
 $(GENERATED)/%.d: % mkdep.coffee
