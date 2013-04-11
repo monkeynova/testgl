@@ -24,12 +24,13 @@ $(OUT)/README.html: README.md
 
 $(GENERATED)/build_dependencies.d: node_dependencies.txt
 	@mkdir -p $(@D)
+	which npm | grep ~ > /dev/null && NPM_OPT=-g || NPM_OPT=
 	npm bin > /dev/null
 	@for dep in `cat node_dependencies.txt`; \
 	do \
-		npm list -g $$dep | grep empty > /dev/null || continue; \
-		echo npm install -g $$dep; \
-		npm install -g $$dep; \
+		npm list $$NPM_OPT $$dep | grep empty > /dev/null || continue; \
+		echo npm install $$NPM_OPT $$dep; \
+		npm install $$NPM_OPT $$dep; \
 	done
 	echo > $@.tmp
 	mv $@.tmp $@
