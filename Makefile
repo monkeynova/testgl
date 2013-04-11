@@ -1,6 +1,9 @@
 OUT=build
 GENERATED=.generated
 
+NPM=$(shell which npm)
+NPM_OPTS=$(shell echo $(NPM) | grep ~ > /dev/null && echo -g)
+
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js jquery.base64.js
 
 all: $(patsubst %,$(OUT)/%,$(EXT_JS)) $(OUT)/README.html
@@ -24,13 +27,12 @@ $(OUT)/README.html: README.md
 
 $(GENERATED)/build_dependencies.d: node_dependencies.txt
 	@mkdir -p $(@D)
-	which npm | grep ~ > /dev/null && NPM_OPT=-g || NPM_OPT=
 	npm bin > /dev/null
 	@for dep in `cat node_dependencies.txt`; \
 	do \
-		npm list $$NPM_OPT $$dep | grep empty > /dev/null || continue; \
-		echo npm install $$NPM_OPT $$dep; \
-		npm install $$NPM_OPT $$dep; \
+		npm list $(NPM_OPTS) $$dep | grep empty > /dev/null || continue; \
+		echo npm install $(NPM_OPTS) $$dep; \
+		npm install $(NPM_OPTS) $$dep; \
 	done
 	echo > $@.tmp
 	mv $@.tmp $@
