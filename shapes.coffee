@@ -17,6 +17,28 @@ class Shape
     @angle_speed = 2 * Math.PI * rotations_per_second
     @axis = axis
 
+  flatten: (vec_array) -> $.map vec_array, (n) -> n
+
+  buildBuffer: (gl,js) ->
+    buffer = gl.createBuffer()
+    buffer.itemSize = js[0].length
+    buffer.numItems = js.length
+    buffer.js = @flatten js
+    gl.bindBuffer gl.ARRAY_BUFFER, buffer
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( buffer.js ), gl.STATIC_DRAW
+
+    return buffer
+
+  buildElementBuffer: (gl,js) ->
+    buffer = gl.createBuffer()
+    buffer.itemSize = 1
+    buffer.js = @flatten js
+    buffer.numItems = buffer.js.length
+    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, buffer
+    gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( buffer.js ), gl.STATIC_DRAW
+
+    return buffer
+
   initTexture: (gl) ->
     gl.bindTexture gl.TEXTURE_2D, @texture
     gl.pixelStorei gl.UNPACK_FLIP_Y_WEBGL, true
@@ -26,7 +48,7 @@ class Shape
     gl.bindTexture gl.TEXTURE_2D, null
     @texture.loaded = true
 
-  draw: (gl,pMatrix,mvMatrix,shader,wire_shader) ->
+  drawSolid: (gl,pMatrix,mvMatrix,shader) ->
     return if ! @initialized
 
     @position mvMatrix
@@ -80,9 +102,10 @@ class Shape
     else
       gl.drawArrays @drawtype, 0, @vertices.numItems
 
-    @drawNormals gl, mvMatrix, pMatrix, wire_shader if @shouldDrawNormals
+  drawWire: (gl,pMatrix,mvMatrix,shader) ->
+    @drawNormals gl, pMatrix, mvMatrix, shader if @shouldDrawNormals
 
-  drawNormals: (gl,mvMatrix,pMatrix,wire_shader) ->
+  drawNormals: (gl,pMatrix,mvMatrix,shader) ->
       if ! @normal_points
         @normal_points = gl.createBuffer()
         @normal_points.js = []
@@ -98,15 +121,15 @@ class Shape
         @normal_points.itemSize = 3
         @normal_points.numItems = @normal_points.js.length / @normal_points.itemSize
 
-      gl.useProgram wire_shader
+      gl.useProgram shader
 
-      gl.uniform4f wire_shader.uniforms["uAmbientColor"], 1, 1, 1, 1
+      gl.uniform4f shader.uniforms["uAmbientColor"], 1, 1, 1, 1
 
       gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
-      gl.vertexAttribPointer wire_shader.attributes["aVertexPosition"], @normal_points.itemSize, gl.FLOAT, false, 0, 0
+      gl.vertexAttribPointer shader.attributes["aVertexPosition"], @normal_points.itemSize, gl.FLOAT, false, 0, 0
 
-      gl.uniformMatrix4fv wire_shader.uniforms["uPMatrix"], false, pMatrix
-      gl.uniformMatrix4fv wire_shader.uniforms["uMVMatrix"], false, mvMatrix
+      gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
+      gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
 
       gl.drawArrays gl.LINES, 0, @normal_points.numItems
 
@@ -186,29 +209,7 @@ class JSONModel extends Shape
     else
       $.getJSON model_url, (data) -> shape.initData gl, data
 
-  flatten: (vec_array) -> $.map vec_array, (n) -> n
-
   validateData: (date) -> true
-
-  buildBuffer: (gl,js) ->
-    buffer = gl.createBuffer()
-    buffer.itemSize = js[0].length
-    buffer.numItems = js.length
-    buffer.js = @flatten js
-    gl.bindBuffer gl.ARRAY_BUFFER, buffer
-    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( buffer.js ), gl.STATIC_DRAW
-
-    return buffer
-
-  buildElementBuffer: (gl,js) ->
-    buffer = gl.createBuffer()
-    buffer.itemSize = 1
-    buffer.js = @flatten js
-    buffer.numItems = buffer.js.length
-    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, buffer
-    gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( buffer.js ), gl.STATIC_DRAW
-
-    return buffer
 
   initData: (gl, data) ->
       if ! @validateData( data )
@@ -625,3 +626,37 @@ class Terrain extends Shape
 
       @initialized = true
 
+
+class Axes extends Shape
+  constructor: (gl,center) ->
+    super gl, center
+
+    @grid_points = []
+    @grid_points.push [ 0, 0, -20 ]
+    @grid_points.push [ 0, 0, 20 ]
+    @grid_points.push [ 0, -20, 0 ]
+    @grid_points.push [ 0, 20, 0 ]
+    @grid_points.push [ -20, 0, 0 ]
+    @grid_points.push [ 20, 0, 0 ]
+    for i in [ -10 .. 10 ]
+      @grid_points.push [ i, 0, -10 ]
+      @grid_points.push [ i, 0, 10 ]
+      @grid_points.push [ -10, 0, i ]
+      @grid_points.push [ 10, 0, i ]
+
+    @grid = @buildBuffer gl, @grid_points
+
+  drawSolid: (gl,pMatrix,mvMatrix,shader) ->
+
+  drawWire: (gl,pMatrix,mvMatrix,shader) ->
+      gl.useProgram shader
+
+      gl.uniform4f shader.uniforms["uAmbientColor"], 1, 1, 1, 1
+
+      gl.bindBuffer gl.ARRAY_BUFFER, @grid
+      gl.vertexAttribPointer shader.attributes["aVertexPosition"], @grid.itemSize, gl.FLOAT, false, 0, 0
+
+      gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
+      gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
+
+      gl.drawArrays gl.LINES, 0, @grid.numItems

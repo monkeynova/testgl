@@ -46,6 +46,7 @@ $ ->
 
     gl.enable gl.DEPTH_TEST
     gl.clearColor 0.5, 0.8, 1, 1
+    gl.clearColor 0, 0, 0, 1
 
     #gl.blendFunc gl.SRC_ALPHA, gl.ONE
     #gl.enable gl.BLEND;
@@ -54,6 +55,9 @@ $ ->
     initShaders gl
 
     startDate = new Date()
+
+    grid = new Axes gl, [ 0, 0, 0 ]
+    shapes.push grid
 
     pyramid_center = [ -1.5, 1, -7 ]
     #shapes.push( new Pyramid gl, pyramid_center )
@@ -68,7 +72,7 @@ $ ->
     shapes.push cube
 
     terrain_center = [ -64, -5, -128 ]
-    shapes.push( new Terrain gl, terrain_center, terrain_data_url )
+#    shapes.push( new Terrain gl, terrain_center, terrain_data_url )
 
     document.onkeydown = (e) -> keyboard[ e.keyCode ] = 1
     document.onkeyup = (e) -> keyboard[ e.keyCode ] = 0
@@ -108,7 +112,8 @@ $ ->
       s.update elapsed
 
       pushMatrix mvMatrix
-      s.draw gl, pMatrix, mvMatrix, default_shader, wire_shader
+      s.drawSolid gl, pMatrix, mvMatrix, default_shader
+      s.drawWire  gl, pMatrix, mvMatrix, wire_shader
       popMatrix mvMatrix
 
     popMatrix mvMatrix
