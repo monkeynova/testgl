@@ -1,4 +1,14 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+
+getJSONMaybeDataURL = (model_url,fn) ->
+  match = /^data:.*?;base64,(.*)/.exec model_url
+  if match
+    json_data = $.base64.decode( match[1] )
+    fn( $.parseJSON( json_data ) )
+  else
+    $.getJSON model_url, (data) -> fn( data )
+
+
 class Shape
   constructor: (gl,center) ->
     @center = center
@@ -202,12 +212,7 @@ class JSONModel extends Shape
 
     @initialized = false
 
-    match = /^data:.*?;base64,(.*)/.exec model_url
-    if match
-      json_data = $.base64.decode( match[1] )
-      @initData gl, $.parseJSON( json_data )
-    else
-      $.getJSON model_url, (data) -> shape.initData gl, data
+    getJSONMaybeDataURL model_url, (data) -> shape.initData gl, data
 
   validateData: (date) -> true
 

@@ -28,7 +28,14 @@ $(GENERATED)/%.dataurl.coffee: %.png dataurl.coffee
 
 $(GENERATED)/%.model.dataurl.coffee: %.model.js dataurl.coffee
 	@mkdir -p $(@D)
+	jslint $<
 	coffee ./dataurl.coffee $(patsubst %.model.js,%_model,$(<F))_data_url $< > $@.tmp
+	mv $@.tmp $@
+
+$(GENERATED)/%.skel.dataurl.coffee: %.skel.js dataurl.coffee
+	@mkdir -p $(@D)
+	jslint $<
+	coffee ./dataurl.coffee $(patsubst %.skel.js,%_skel,$(<F))_data_url $< > $@.tmp
 	mv $@.tmp $@
 
 $(OUT)/%.js: $(GENERATED)/%.coffee

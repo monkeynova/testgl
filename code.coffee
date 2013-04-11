@@ -5,6 +5,7 @@
 #=require <terrain.dataurl.coffee>
 #=require <pyramid.model.dataurl.coffee>
 #=require <cube.model.dataurl.coffee>
+#=require <humanoid.skel.dataurl.coffee>
 
 $ ->
   canvas = document.getElementById 'viewport'
@@ -46,7 +47,6 @@ $ ->
 
     gl.enable gl.DEPTH_TEST
     gl.clearColor 0.5, 0.8, 1, 1
-    gl.clearColor 0, 0, 0, 1
 
     #gl.blendFunc gl.SRC_ALPHA, gl.ONE
     #gl.enable gl.BLEND;
