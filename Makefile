@@ -13,12 +13,25 @@ neat:
 	rm -f \#*\#
 	rm -f .\#*
 
+include $(GENERATED)/build_dependencies.d
 include $(GENERATED)/index.jade.d
 include $(GENERATED)/code.coffee.d
 
 $(OUT)/README.html: README.md
 	@mkdir -p $(@D)
 	marked --gfm $< > $@.tmp
+	mv $@.tmp $@
+
+$(GENERATED)/build_dependencies.d: node_dependencies.txt
+	@mkdir -p $(@D)
+	npm bin > /dev/null
+	@for dep in `cat node_dependencies.txt`; \
+	do \
+		npm list -g $$dep | grep empty > /dev/null || continue; \
+		echo npm install -g $$dep; \
+		npm install -g $$dep; \
+	done
+	echo > $@.tmp
 	mv $@.tmp $@
 
 $(GENERATED)/%.d: % mkdep.coffee
