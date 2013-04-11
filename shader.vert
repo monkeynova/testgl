@@ -31,6 +31,7 @@ void main(void) {
   vec3 lightDirection = normalize( uLightPosition - mvPosition.xyz );
   vec3 transformedNormal = uNMatrix * aVertexNormal;
   float lightWeighting = max( dot( transformedNormal, lightDirection ), 0.0 );
+
   vLightWeighting = uAmbientColor + uDirectionalColor * lightWeighting;
 }
 

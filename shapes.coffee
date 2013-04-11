@@ -26,10 +26,10 @@ class Shape
     gl.bindTexture gl.TEXTURE_2D, null
     @texture.loaded = true
 
-  draw: (gl,pMatrix,mMatrix,shader,wire_shader) ->
+  draw: (gl,pMatrix,mvMatrix,shader,wire_shader) ->
     return if ! @initialized
 
-    @position mMatrix
+    @position mvMatrix
 
     gl.useProgram shader
 
@@ -66,10 +66,10 @@ class Shape
     gl.vertexAttribPointer shader.attributes["aVertexNormal"], @normals.itemSize, gl.FLOAT, false, 0, 0
 
     gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
-    gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mMatrix
+    gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
 
     normalMatrix = mat3.create()
-    mat4.toInverseMat3 mMatrix, normalMatrix
+    mat4.toInverseMat3 mvMatrix, normalMatrix
     mat3.transpose normalMatrix
 
     gl.uniformMatrix3fv shader.uniforms["uNMatrix"], false, normalMatrix
@@ -80,9 +80,9 @@ class Shape
     else
       gl.drawArrays @drawtype, 0, @vertices.numItems
 
-    @drawNormals gl, mMatrix, pMatrix, wire_shader if @shouldDrawNormals
+    @drawNormals gl, mvMatrix, pMatrix, wire_shader if @shouldDrawNormals
 
-  drawNormals: (gl,mMatrix,pMatrix,wire_shader) ->
+  drawNormals: (gl,mvMatrix,pMatrix,wire_shader) ->
       if ! @normal_points
         @normal_points = gl.createBuffer()
         @normal_points.js = []
@@ -106,7 +106,7 @@ class Shape
       gl.vertexAttribPointer wire_shader.attributes["aVertexPosition"], @normal_points.itemSize, gl.FLOAT, false, 0, 0
 
       gl.uniformMatrix4fv wire_shader.uniforms["uPMatrix"], false, pMatrix
-      gl.uniformMatrix4fv wire_shader.uniforms["uMVMatrix"], false, mMatrix
+      gl.uniformMatrix4fv wire_shader.uniforms["uMVMatrix"], false, mvMatrix
 
       gl.drawArrays gl.LINES, 0, @normal_points.numItems
 

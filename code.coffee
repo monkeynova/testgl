@@ -19,7 +19,7 @@ $ ->
   camera = {}
   shapes = []
   pMatrix = null
-  mMatrix = null
+  mvMatrix = null
 
   matrixStack = []
 
@@ -96,22 +96,22 @@ $ ->
 
     updateInput camera, keyboard
 
-    pushMatrix mMatrix
+    pushMatrix mvMatrix
 
-    mat4.rotate mMatrix, camera.pitch, [ 1, 0, 0 ]
-    mat4.rotate mMatrix, camera.yaw, [ 0, 1, 0 ]
-    mat4.translate mMatrix, [ -camera.posX, -camera.posY, -camera.posZ ]
+    mat4.rotate mvMatrix, camera.pitch, [ 1, 0, 0 ]
+    mat4.rotate mvMatrix, camera.yaw, [ 0, 1, 0 ]
+    mat4.translate mvMatrix, [ -camera.posX, -camera.posY, -camera.posZ ]
 
-    addLighting default_shader, mMatrix
+    addLighting default_shader, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
 
     for s in shapes
       s.update elapsed
 
-      pushMatrix mMatrix
-      s.draw gl, pMatrix, mMatrix, default_shader, wire_shader
-      popMatrix mMatrix
+      pushMatrix mvMatrix
+      s.draw gl, pMatrix, mvMatrix, default_shader, wire_shader
+      popMatrix mvMatrix
 
-    popMatrix mMatrix
+    popMatrix mvMatrix
 
     fps = if elapsed then 1  / elapsed else 0
 
@@ -148,11 +148,19 @@ $ ->
     if keyboard[81] # 'q'
       camera.pitch += angularSpeed
 
-   addLighting = (program,mMatrix) ->
+   addLighting = (program,mvMatrix,fullElapsed) ->
     gl.useProgram program
-    gl.uniform3f program.uniforms["uLightPosition"], 10, 10, 10
-    gl.uniform3f program.uniforms["uAmbientColor"], 0.3, 0.3, 0.3
-    gl.uniform3f program.uniforms["uDirectionalColor"], 0.7, 0.7, 0.7
+
+    lightAngle = fullElapsed * 2 * Math.PI / 10
+    light_position = vec3.create [ 100 * Math.cos( lightAngle ), 100, 100 * Math.sin( lightAngle ) ]
+    start_pos_string = "[" + Math.floor( light_position[0] ) + "," + Math.floor( light_position[1] ) + "," + Math.floor( light_position[2] ) + "]"
+    mat4.multiplyVec3 mvMatrix, light_position
+    mv_pos_string = "[" + Math.floor( light_position[0] ) + "," + Math.floor( light_position[1] ) + "," + Math.floor( light_position[2] ) + "]"
+    status start_pos_string + " => " + mv_pos_string
+
+    gl.uniform3fv program.uniforms["uLightPosition"], light_position
+    gl.uniform3f program.uniforms["uAmbientColor"], 0.2, 0.2, 0.2
+    gl.uniform3f program.uniforms["uDirectionalColor"], 0.8, 0.8, 0.8
 
   reshape = ->
     return if canvas.clientWidth == canvas.width && canvas.clientHeight == canvas.height
@@ -163,7 +171,7 @@ $ ->
     pMatrix = mat4.create()
     mat4.perspective 45, canvas.width / canvas.height, 0.1, 100, pMatrix
 
-    mMatrix = mat4.create()
-    mat4.identity mMatrix
+    mvMatrix = mat4.create()
+    mat4.identity mvMatrix
 
   initialize()

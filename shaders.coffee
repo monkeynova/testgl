@@ -47,7 +47,7 @@ initNamedShader = (gl,shader_name) ->
       "uNMatrix",
       "uSampler",
       "uUseTexture",
-      "uLightDirection",
+      "uLightPosition",
       "uAmbientColor",
       "uDirectionalColor",
     ]
@@ -56,6 +56,7 @@ initNamedShader = (gl,shader_name) ->
 
   for name in uniform_names
     shader.uniforms[name] = gl.getUniformLocation shader, name
+    console.log shader_name + ": " + name + "=" + shader.uniforms[name]        
 
   return shader
 
