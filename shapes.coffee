@@ -13,7 +13,7 @@ class Shape
   constructor: (gl,center) ->
     @center = center
     @initialized = true
-    @shouldDrawNormals = false
+    @shouldDrawNormals = true
 
   position: (m) ->
     mat4.translate m, @center
@@ -113,6 +113,8 @@ class Shape
       gl.drawArrays @drawtype, 0, @vertices.numItems
 
   drawWire: (gl,pMatrix,mvMatrix,shader) ->
+    return if ! @initialized
+
     @drawNormals gl, pMatrix, mvMatrix, shader if @shouldDrawNormals
 
   drawNormals: (gl,pMatrix,mvMatrix,shader) ->

@@ -56,8 +56,8 @@ $ ->
 
     startDate = new Date()
 
-    grid = new Axes gl, [ 0, 0, 0 ]
-    shapes.push grid
+#    grid = new Axes gl, [ 0, 0, 0 ]
+#    shapes.push grid
 
     pyramid_center = [ -1.5, 1, -7 ]
     #shapes.push( new Pyramid gl, pyramid_center )
@@ -72,7 +72,7 @@ $ ->
     shapes.push cube
 
     terrain_center = [ -64, -5, -128 ]
-#    shapes.push( new Terrain gl, terrain_center, terrain_data_url )
+    shapes.push( new Terrain gl, terrain_center, terrain_data_url )
 
     document.onkeydown = (e) -> keyboard[ e.keyCode ] = 1
     document.onkeyup = (e) -> keyboard[ e.keyCode ] = 0

@@ -24,3 +24,4 @@ Resources
 * OpenGL Transformation -- http://www.songho.ca/opengl/gl_transform.html
 * OpenGL Shading Language Reference -- http://www.opengl.org/sdk/docs/manglsl/
 * OpenGL Wiki (geometry shader) -- http://www.opengl.org/wiki/Geometry_Shader
+* Game Programming Wiki (Bone System) -- http://content.gpwiki.org/index.php/OpenGL:Tutorials:Basic_Bones_System

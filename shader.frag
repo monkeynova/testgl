@@ -17,5 +17,17 @@ void main(void) {
   else {
     color = vColor;
   }
-  gl_FragColor = vec4( color.rgb * vLightWeighting, color.a );
+
+  vec4 surfaceColor = vec4( color.rgb * vLightWeighting, color.a );
+
+  if ( false ) {
+    float dist = 1.0 - gl_FragCoord.z * gl_FragCoord.w;
+    vec4 fogColor = 0.2 * dist * vec4( 1, 1, 1, 1 );
+
+    gl_FragColor = fogColor + surfaceColor;
+
+  } else {
+    gl_FragColor = surfaceColor;
+
+  }
 }
