@@ -13,6 +13,7 @@ class Shape
   constructor: (gl,center) ->
     @center = center
     @initialized = true
+    @shininess = 0
     @shouldDrawNormals = true
 
   position: (m) ->
@@ -75,6 +76,8 @@ class Shape
 
     else
       gl.uniform1i shader.uniforms["uUseTexture"], 0
+
+    gl.uniform1f shader.uniforms["uMaterialShininess"], @shininess
 
     if not @texture_coord
       @texture_coord = gl.createBuffer()
@@ -224,6 +227,8 @@ class JSONModel extends Shape
         return
 
       @model = data
+
+      @shininess = if @model.shininess then @model.shininess else 0
 
       @vertices = @buildBuffer gl, @model.vertices
 

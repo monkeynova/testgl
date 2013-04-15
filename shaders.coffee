@@ -50,6 +50,8 @@ initNamedShader = (gl,shader_name) ->
       "uLightPosition",
       "uAmbientColor",
       "uDirectionalColor",
+      "uSpecularColor",
+      "uMaterialShininess",
     ]
 
   shader.uniforms = []
@@ -76,7 +78,7 @@ getShader = (gl, id) ->
   gl.compileShader shader
 
   if ( ! gl.getShaderParameter( shader, gl.COMPILE_STATUS ) )
-    alert gl.getShaderInfoLog( shader )
+    alert "error compiling " + id + "\n" + gl.getShaderInfoLog( shader )
     return
 
   return shader      

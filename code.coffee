@@ -169,7 +169,8 @@ $ ->
 
     gl.uniform3fv program.uniforms["uLightPosition"], light_position
     gl.uniform3f program.uniforms["uAmbientColor"], 0.2, 0.2, 0.2
-    gl.uniform3f program.uniforms["uDirectionalColor"], 0.8, 0.8, 0.8
+    gl.uniform3f program.uniforms["uDirectionalColor"], 0.6, 0.6, 0.6
+    gl.uniform3f program.uniforms["uSpecularColor"], 1, 1, 1
 
   reshape = ->
     return if canvas.clientWidth == canvas.width && canvas.clientHeight == canvas.height

@@ -4,7 +4,7 @@
 long_slices = 10
 lat_slices = 10
 
-sphere = { name : "Sphere" }
+sphere = { name : "Sphere"; shininess : 20 }
 
 sphere.vertices = [ [ 0, -1, 0 ], [ 0, 1, 0 ] ] # Poles
 

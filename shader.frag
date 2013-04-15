@@ -11,6 +11,9 @@ uniform vec3 uLightPosition;
 
 uniform vec3 uAmbientColor;
 uniform vec3 uDirectionalColor;
+uniform vec3 uSpecularColor;
+
+uniform float uMaterialShininess;
 
 uniform sampler2D uSampler;
 
@@ -26,9 +29,20 @@ void main(void) {
     color = vColor;
   }
 
+  vec3 normal = normalize( vTransformedNormal );
+
   vec3 lightDirection = normalize( uLightPosition - vPosition );
-  float lightWeighting = max( dot( normalize( vTransformedNormal ), lightDirection ), 0.0 );
-  vec3 lightColor = uAmbientColor + uDirectionalColor * lightWeighting;
+
+  float specularLighting = 0.0;
+
+  if ( uMaterialShininess != 0.0 ) {
+    vec3 eyeDirection = normalize( -vPosition );
+    vec3 reflectDirection = reflect( -lightDirection, normal );
+    specularLighting = pow( max( dot( reflectDirection, eyeDirection ), 0.0 ), uMaterialShininess );
+  }
+
+  float lightWeighting = max( dot( normal, lightDirection ), 0.0 );
+  vec3 lightColor = uAmbientColor + uDirectionalColor * lightWeighting + uSpecularColor * specularLighting;
 
   vec4 surfaceColor = vec4( color.rgb * lightColor, color.a );
 
