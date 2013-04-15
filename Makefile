@@ -27,6 +27,7 @@ $(OUT)/README.html: README.md
 
 $(GENERATED)/build_dependencies.d: node_dependencies.txt
 	@mkdir -p $(@D)
+	sort node_dependencies.txt | diff -C 2 --label SORTED - node_dependencies.txt
 	npm bin > /dev/null
 	@for dep in `cat node_dependencies.txt`; \
 	do \
@@ -48,6 +49,10 @@ $(GENERATED)/sphere.model.js: ./tools/mksphere.coffee
 
 $(GENERATED)/torus.model.js: ./tools/mktorus.coffee
 	coffee ./tools/mktorus.coffee > $@.tmp
+	mv $@.tmp $@
+
+$(GENERATED)/terrain.model.js: terrain.png ./tools/image_to_terrain.coffee
+	coffee ./tools/image_to_terrain.coffee $< > $@.tmp
 	mv $@.tmp $@
 
 $(GENERATED)/%.dataurl.coffee: %.png ./tools/dataurl.coffee

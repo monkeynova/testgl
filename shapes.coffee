@@ -604,10 +604,10 @@ class Terrain extends Shape
 
           if height > 10
             @colors.js.push 1, 1, 1, 1 # White
-          else if height > 2
-            @colors.js.push 0.25, 0.6, 0.04, 1 # Green
-          else
+          else if height > 5
             @colors.js.push 0.30, 0.20, 0.08, 1 # Brown
+          else
+            @colors.js.push 0.25, 0.6, 0.04, 1 # Green
 
           if i < @width - 1 && j < @height - 1
             base = i * @height + j
