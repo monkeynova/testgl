@@ -46,6 +46,10 @@ $(GENERATED)/sphere.model.js: ./tools/mksphere.coffee
 	coffee ./tools/mksphere.coffee > $@.tmp
 	mv $@.tmp $@
 
+$(GENERATED)/torus.model.js: ./tools/mktorus.coffee
+	coffee ./tools/mktorus.coffee > $@.tmp
+	mv $@.tmp $@
+
 $(GENERATED)/%.dataurl.coffee: %.png ./tools/dataurl.coffee
 	@mkdir -p $(@D)
 	coffee ./tools/dataurl.coffee $(patsubst %.png,%,$(<F))_data_url $< > $@.tmp
