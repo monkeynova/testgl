@@ -7,7 +7,15 @@ varying vec2 vTextureCoord;
 
 uniform bool uUseTexture;
 
+uniform vec3 uLightPosition;
+
+uniform vec3 uAmbientColor;
+uniform vec3 uDirectionalColor;
+
 uniform sampler2D uSampler;
+
+varying vec3 vPosition;
+varying vec3 vTransformedNormal;
 
 void main(void) {
   vec4 color;
@@ -18,7 +26,11 @@ void main(void) {
     color = vColor;
   }
 
-  vec4 surfaceColor = vec4( color.rgb * vLightWeighting, color.a );
+  vec3 lightDirection = normalize( uLightPosition - vPosition );
+  float lightWeighting = max( dot( normalize( vTransformedNormal ), lightDirection ), 0.0 );
+  vec3 lightColor = uAmbientColor + uDirectionalColor * lightWeighting;
+
+  vec4 surfaceColor = vec4( color.rgb * lightColor, color.a );
 
   if ( false ) {
     float dist = 1.0 - gl_FragCoord.z * gl_FragCoord.w;

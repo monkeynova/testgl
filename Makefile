@@ -37,26 +37,36 @@ $(GENERATED)/build_dependencies.d: node_dependencies.txt
 	echo > $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/%.d: % mkdep.coffee
+$(GENERATED)/%.d: % ./tools/mkdep.coffee
 	@mkdir -p $(@D)
-	coffee ./mkdep.coffee $< > $@.tmp
+	coffee ./tools/mkdep.coffee $< > $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/%.dataurl.coffee: %.png dataurl.coffee
-	@mkdir -p $(@D)
-	coffee ./dataurl.coffee $(patsubst %.png,%,$(<F))_data_url $< > $@.tmp
+$(GENERATED)/sphere.model.js: ./tools/mksphere.coffee
+	coffee ./tools/mksphere.coffee > $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/%.model.dataurl.coffee: %.model.js dataurl.coffee
+$(GENERATED)/%.dataurl.coffee: %.png ./tools/dataurl.coffee
+	@mkdir -p $(@D)
+	coffee ./tools/dataurl.coffee $(patsubst %.png,%,$(<F))_data_url $< > $@.tmp
+	mv $@.tmp $@
+
+$(GENERATED)/%.model.dataurl.coffee: %.model.js ./tools/dataurl.coffee
 	@mkdir -p $(@D)
 	jslint $<
-	coffee ./dataurl.coffee $(patsubst %.model.js,%_model,$(<F))_data_url $< > $@.tmp
+	coffee ./tools/dataurl.coffee $(patsubst %.model.js,%_model,$(<F))_data_url $< > $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/%.skel.dataurl.coffee: %.skel.js dataurl.coffee
+$(GENERATED)/%.model.dataurl.coffee: $(GENERATED)/%.model.js ./tools/dataurl.coffee
 	@mkdir -p $(@D)
 	jslint $<
-	coffee ./dataurl.coffee $(patsubst %.skel.js,%_skel,$(<F))_data_url $< > $@.tmp
+	coffee ./tools/dataurl.coffee $(patsubst %.model.js,%_model,$(<F))_data_url $< > $@.tmp
+	mv $@.tmp $@
+
+$(GENERATED)/%.skel.dataurl.coffee: %.skel.js ./tools/dataurl.coffee
+	@mkdir -p $(@D)
+	jslint $<
+	coffee ./tools/dataurl.coffee $(patsubst %.skel.js,%_skel,$(<F))_data_url $< > $@.tmp
 	mv $@.tmp $@
 
 $(OUT)/%.js: $(GENERATED)/%.coffee

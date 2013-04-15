@@ -5,6 +5,7 @@
 #=require <terrain.dataurl.coffee>
 #=require <pyramid.model.dataurl.coffee>
 #=require <cube.model.dataurl.coffee>
+#=require <sphere.model.dataurl.coffee>
 #=require <humanoid.skel.dataurl.coffee>
 
 $ ->
@@ -59,14 +60,17 @@ $ ->
 #    grid = new Axes gl, [ 0, 0, 0 ]
 #    shapes.push grid
 
-    pyramid_center = [ -1.5, 1, -7 ]
-    #shapes.push( new Pyramid gl, pyramid_center )
-    pyramid = new JSONModel gl, pyramid_center, pyramid_model_data_url
-    pyramid.animate 1/3, [ 0, 1, 0 ]
-    shapes.push pyramid
+#    pyramid_center = [ -1.5, 1, -7 ]
+#    pyramid = new JSONModel gl, pyramid_center, pyramid_model_data_url
+#    pyramid.animate 1/3, [ 0, 1, 0 ]
+#    shapes.push pyramid
+
+    sphere_center = [ -1.5, 1, -7 ]
+    sphere = new JSONModel gl, sphere_center, sphere_model_data_url
+    sphere.animate 1/3, [ 0, 1, 0 ]
+    shapes.push sphere
 
     cube_center = [ 1.5, 1, -7 ]
-    #shapes.push( new TextureCube gl, cube_center, texture_data_url )
     cube = new JSONModel gl, cube_center, cube_model_data_url
     cube.animate 1/10, [ 1, 1, 1 ]
     shapes.push cube
