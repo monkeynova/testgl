@@ -1,9 +1,11 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-default_shader = null
+vertex_lighting_shader = null
+pixel_lighting_shader = null
 wire_shader = null
 
 initShaders = (gl) ->
-  default_shader = initNamedShader gl, 'shader'
+  vertex_lighting_shader = initNamedShader gl, 'shader'
+  pixel_lighting_shader = initNamedShader gl, 'pixel-lighting'
   wire_shader = initNamedShader gl, 'wire'
 
 initNamedShader = (gl,shader_name) ->

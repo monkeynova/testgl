@@ -116,13 +116,14 @@ $ ->
     mat4.rotate mvMatrix, camera.yaw, [ 0, 1, 0 ]
     mat4.translate mvMatrix, [ -camera.posX, -camera.posY, -camera.posZ ]
 
-    addLighting default_shader, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
+    addLighting vertex_lighting_shader, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
+    addLighting pixel_lighting_shader, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
 
     for s in shapes
       s.update elapsed
 
       pushMatrix mvMatrix
-      s.drawSolid gl, pMatrix, mvMatrix, default_shader
+      s.drawSolid gl, pMatrix, mvMatrix, vertex_lighting_shader, pixel_lighting_shader
       s.drawWire  gl, pMatrix, mvMatrix, wire_shader
       popMatrix mvMatrix
 

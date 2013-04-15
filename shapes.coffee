@@ -59,10 +59,16 @@ class Shape
     gl.bindTexture gl.TEXTURE_2D, null
     @texture.loaded = true
 
-  drawSolid: (gl,pMatrix,mvMatrix,shader) ->
+  drawSolid: (gl,pMatrix,mvMatrix,vertex_lighting_shader,pixel_lighting_shader) ->
     return if ! @initialized
 
     @position mvMatrix
+
+    shader = null
+    if @shininess != 0
+      shader = pixel_lighting_shader
+    else
+      shader = vertex_lighting_shader
 
     gl.useProgram shader
 

@@ -13,7 +13,7 @@ TODO
  - [X] Sample humanoid
  - [ ] Joint angle limits
 - [ ] Lighting
- - [ ] Fragment lighting
+ - [X] Fragment lighting
  - [ ] Normal map
 - [ ] Physics?
 
