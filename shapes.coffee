@@ -87,13 +87,14 @@ class Shape
       @texture_coord = gl.createBuffer()
       gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
       @texture_coord.js = []
-      @texture_coord.js.push( 0 ) for [ 1 .. 2 * @vertices.numItems ]
+      @texture_coord.js.push( 0, 0 ) for [ 1 .. @vertices.numItems ]
       gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @texture_coord.js ), gl.STATIC_DRAW
       @texture_coord.itemSize = 2
       @texture_coord.numItems = @texture_coord.js.length / @texture_coord.itemSize
 
-    gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
-    gl.vertexAttribPointer shader.attributes["aTextureCoord"], @texture_coord.itemSize, gl.FLOAT, false, 0, 0
+    if shader.attributes["aTextureCoord"] >= 0
+      gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
+      gl.vertexAttribPointer shader.attributes["aTextureCoord"], @texture_coord.itemSize, gl.FLOAT, false, 0, 0
 
     if @normalmap
       gl.uniform1i shader.uniforms["uUseNormalMap"], 1
@@ -112,22 +113,39 @@ class Shape
       @normal_coord = gl.createBuffer()
       gl.bindBuffer gl.ARRAY_BUFFER, @normal_coord
       @normal_coord.js = []
-      @normal_coord.js.push( 0 ) for [ 1 .. 2 * @vertices.numItems ]
+      @normal_coord.js.push( 0, 0 ) for [ 1 .. @vertices.numItems ]
       gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normal_coord.js ), gl.STATIC_DRAW
       @normal_coord.itemSize = 2
       @normal_coord.numItems = @normal_coord.js.length / @normal_coord.itemSize
+
+    if shader.attributes["aNormalCoord"] >= 0
+      gl.bindBuffer gl.ARRAY_BUFFER, @normal_coord
+      gl.vertexAttribPointer shader.attributes["aNormalCoord"], @normal_coord.itemSize, gl.FLOAT, false, 0, 0
+
+    if not @tangents
+      @tangents = gl.createBuffer()
+      gl.bindBuffer gl.ARRAY_BUFFER, @tangents
+      @tangents.js = []
+      @tangents.js.push( 0, 0, 1 ) for [ 1 .. @vertices.numItems ]
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @tangents.js ), gl.STATIC_DRAW
+      @tangents.itemSize = 3
+      @tangents.numItems = @tangents.js.length / @tangents.itemSize
       
-    gl.bindBuffer gl.ARRAY_BUFFER, @normal_coord
-    gl.vertexAttribPointer shader.attributes["aNormalCoord"], @normal_coord.itemSize, gl.FLOAT, false, 0, 0
+    if shader.attributes["aVertexPosition"] >= 0
+      gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+      gl.vertexAttribPointer shader.attributes["aVertexPosition"], @vertices.itemSize, gl.FLOAT, false, 0, 0
+  
+    if shader.attributes["aVertexColor"] >= 0
+      gl.bindBuffer gl.ARRAY_BUFFER, @colors
+      gl.vertexAttribPointer shader.attributes["aVertexColor"], @colors.itemSize, gl.FLOAT, false, 0, 0
 
-    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
-    gl.vertexAttribPointer shader.attributes["aVertexPosition"], @vertices.itemSize, gl.FLOAT, false, 0, 0
+    if shader.attributes["aVertexNormal"] >= 0
+      gl.bindBuffer gl.ARRAY_BUFFER, @normals
+      gl.vertexAttribPointer shader.attributes["aVertexNormal"], @normals.itemSize, gl.FLOAT, false, 0, 0
 
-    gl.bindBuffer gl.ARRAY_BUFFER, @normals
-    gl.vertexAttribPointer shader.attributes["aVertexNormal"], @normals.itemSize, gl.FLOAT, false, 0, 0
-
-    gl.bindBuffer gl.ARRAY_BUFFER, @colors
-    gl.vertexAttribPointer shader.attributes["aVertexColor"], @colors.itemSize, gl.FLOAT, false, 0, 0
+    if shader.attributes["aVertexTangent"] >= 0
+      gl.bindBuffer gl.ARRAY_BUFFER, @tangents
+      gl.vertexAttribPointer shader.attributes["aVertexTangent"], @tangents.itemSize, gl.FLOAT, false, 0, 0
 
     gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
     gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
@@ -459,6 +477,45 @@ class Cube extends Shape
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normals.js ), gl.STATIC_DRAW
     @normals.itemSize = 3
     @normals.numItems = @normals.js.length / @normals.itemSize
+
+    @tangents = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @tangents
+    @tangents.js =
+      [
+        # Front
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+        # Back
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+        # Right
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
+        # Left
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
+        # Top
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+        # Bottom
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+      ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @tangents.js ), gl.STATIC_DRAW
+    @tangents.itemSize = 3
+    @tangents.numItems = @tangents.js.length / @tangents.itemSize
   
     @colors = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @colors

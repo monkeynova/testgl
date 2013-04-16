@@ -22,6 +22,7 @@ uniform sampler2D uNormalSampler;
 
 varying vec3 vPosition;
 varying vec3 vTransformedNormal;
+varying vec3 vTransformedTangent;
 
 void main(void) {
   vec4 color;
@@ -34,7 +35,15 @@ void main(void) {
   vec3 normal;
 
   if ( uUseNormalMap ) {
-    normal = texture2D( uNormalSampler, vec2( vNormalCoord.x, vNormalCoord.y ) ).xyz * 2.0 - 1.0;
+    vec3 textureNormal = texture2D( uNormalSampler, vec2( vNormalCoord.x, vNormalCoord.y ) ).xyz * 2.0 - 1.0;
+
+    vec3 binormal = cross( vTransformedTangent, vTransformedNormal );
+
+    normal = textureNormal.x * vTransformedTangent +
+      textureNormal.y * binormal +
+      textureNormal.z * vTransformedNormal;
+
+    normal = normalize( normal );
   } else {
     normal = normalize( vTransformedNormal );
   }

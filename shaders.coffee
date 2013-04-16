@@ -29,6 +29,7 @@ initNamedShader = (gl,shader_name) ->
     [
       "aVertexPosition",
       "aVertexNormal",
+      "aVertexTangent",
       "aVertexColor",
       "aTextureCoord",
       "aNormalCoord",
@@ -38,10 +39,10 @@ initNamedShader = (gl,shader_name) ->
 
   for name in attribute_names
     location = gl.getAttribLocation shader, name
+    console.log shader_name + ": " + name + "=" + location
     if location >= 0
       shader.attributes[name] = location
       gl.enableVertexAttribArray shader.attributes[name]
-      console.log shader_name + ": " + name + "=" + shader.attributes[name]        
 
   uniform_names =
     [
