@@ -600,10 +600,10 @@ class Terrain extends Shape
           next_j = if j < @height - 1 then j + 1 else j
 
           vec_di = vec3.create [ next_i - prev_i, @heights[next_i][j] - @heights[prev_i][j], 0 ]
-          vec_dj = vec3.create [ 0, @heights[i][next_j] - @heights[i][prev_j], -(next_j - prev_j) ]
+          vec_dj = vec3.create [ 0, @heights[i][next_j] - @heights[i][prev_j], next_j - prev_j ]
 
-          normal = vec3.create()
-          vec3.cross vec_di, vec_dj, normal
+          normal = vec3.create( [ 0, 0, 0 ] )
+          vec3.cross vec_dj, vec_di, normal
           vec3.normalize normal
 
           @normals.js.push normal[0], normal[1], normal[2]

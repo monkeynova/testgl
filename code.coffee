@@ -24,6 +24,8 @@ $ ->
   shapes = []
   pMatrix = null
   mvMatrix = null
+  lightSphere = null
+  lightPosition = null
 
   matrixStack = []
 
@@ -67,10 +69,9 @@ $ ->
 #    pyramid.animate 1/3, [ 0, 1, 0 ]
 #    shapes.push pyramid
 
-#    sphere_center = [ -1.5, 1, -7 ]
-#    sphere = new JSONModel gl, sphere_center, sphere_model_data_url
-#    sphere.animate 1/3, [ 0, 1, 0 ]
-#    shapes.push sphere
+    sphere_center = [ 0, 0, 0 ]
+    lightSphere = new JSONModel gl, sphere_center, sphere_model_data_url
+    shapes.push lightSphere
 
     trefoil_center = [ -1.5, 1, -7 ]
     trefoil = new JSONModel gl, trefoil_center, trefoil_model_data_url
@@ -144,7 +145,7 @@ $ ->
     requestAnimFrame render
 
   updateInput = (camera,keyboard) ->
-    linearSpeed = 0.05
+    linearSpeed = 0.20
     angularSpeed = 0.03
 
     if keyboard[87] # 'w'
@@ -174,13 +175,11 @@ $ ->
     gl.useProgram program
 
     lightAngle = fullElapsed * 2 * Math.PI / 10
-    light_position = vec3.create [ 100 * Math.cos( lightAngle ), 100, 100 * Math.sin( lightAngle ) ]
-    start_pos_string = "[" + Math.floor( light_position[0] ) + "," + Math.floor( light_position[1] ) + "," + Math.floor( light_position[2] ) + "]"
-    mat4.multiplyVec3 mvMatrix, light_position
-    mv_pos_string = "[" + Math.floor( light_position[0] ) + "," + Math.floor( light_position[1] ) + "," + Math.floor( light_position[2] ) + "]"
-    status start_pos_string + " => " + mv_pos_string
+    lightPosition = vec3.create [ 50 * Math.cos( lightAngle ), 50, 50 * Math.sin( lightAngle ) ]
+    lightSphere.center = lightPosition
+    mat4.multiplyVec3 mvMatrix, lightPosition
 
-    gl.uniform3fv program.uniforms["uLightPosition"], light_position
+    gl.uniform3fv program.uniforms["uLightPosition"], lightPosition
     gl.uniform3f program.uniforms["uAmbientColor"], 0.2, 0.2, 0.2
     gl.uniform3f program.uniforms["uDirectionalColor"], 0.6, 0.6, 0.6
     gl.uniform3f program.uniforms["uSpecularColor"], 1, 1, 1
