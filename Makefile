@@ -57,6 +57,16 @@ $(GENERATED)/%.dataurl.coffee: %.png ./tools/dataurl.coffee
 	coffee ./tools/dataurl.coffee $(patsubst %.png,%,$(<F))_data_url $< > $@.tmp
 	mv $@.tmp $@
 
+$(GENERATED)/wave_bumpmap.png: ./tools/mkwave_bumpmap.coffee
+	@mkdir -p $(@D)
+	coffee $< $@.tmp
+	mv $@.tmp $@
+
+$(GENERATED)/%.dataurl.coffee: $(GENERATED)/%.png ./tools/dataurl.coffee
+	@mkdir -p $(@D)
+	coffee ./tools/dataurl.coffee $(patsubst %.png,%,$(<F))_data_url $< > $@.tmp
+	mv $@.tmp $@
+
 $(GENERATED)/%.model.dataurl.coffee: %.model.js ./tools/dataurl.coffee
 	@mkdir -p $(@D)
 	jslint $<

@@ -3,6 +3,7 @@
 #=require <shapes.coffee>
 #=require <texture.dataurl.coffee>
 #=require <terrain.dataurl.coffee>
+#=require <wave_bumpmap.dataurl.coffee>
 #=require <pyramid.model.dataurl.coffee>
 #=require <cube.model.dataurl.coffee>
 #=require <sphere.model.dataurl.coffee>
@@ -83,10 +84,15 @@ $ ->
 #    cube.animate 1/10, [ 1, 1, 1 ]
 #    shapes.push cube
 
-    torus_center = [ 1.5, 1, -7 ]
-    torus = new JSONModel gl, torus_center, torus_model_data_url
-    torus.animate 1/3, [ 1, 0, 0 ]
-    shapes.push torus
+    cube_center = [ 1.5, 1, -7 ]
+    cube = new NormalCube gl, cube_center, wave_bumpmap_data_url
+    cube.animate 1/10, [ 1, 1, 1 ]
+    shapes.push cube
+
+#    torus_center = [ 1.5, 1, -7 ]
+#    torus = new JSONModel gl, torus_center, torus_model_data_url
+#    torus.animate 1/3, [ 1, 0, 0 ]
+#    shapes.push torus
 
     terrain_center = [ -64, -5, -128 ]
     shapes.push( new Terrain gl, terrain_center, terrain_data_url )

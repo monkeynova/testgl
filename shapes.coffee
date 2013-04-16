@@ -50,14 +50,14 @@ class Shape
 
     return buffer
 
-  initTexture: (gl) ->
-    gl.bindTexture gl.TEXTURE_2D, @texture
+  initTexture: (gl,texture) ->
+    gl.bindTexture gl.TEXTURE_2D, texture
     gl.pixelStorei gl.UNPACK_FLIP_Y_WEBGL, true
-    gl.texImage2D gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, @texture.image
-    gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST
-    gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST
+    gl.texImage2D gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image
+    gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR
+    gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR
     gl.bindTexture gl.TEXTURE_2D, null
-    @texture.loaded = true
+    texture.loaded = true
 
   drawSolid: (gl,pMatrix,mvMatrix,vertex_lighting_shader,pixel_lighting_shader) ->
     return if ! @initialized
@@ -65,7 +65,7 @@ class Shape
     @position mvMatrix
 
     shader = null
-    if @shininess != 0
+    if @shininess != 0 || @normalmap
       shader = pixel_lighting_shader
     else
       shader = vertex_lighting_shader
@@ -78,12 +78,10 @@ class Shape
       if @texture.loaded
         gl.activeTexture gl.TEXTURE0
         gl.bindTexture gl.TEXTURE_2D, @texture
-        gl.uniform1i shader.uniforms["uSampler"], 0
+        gl.uniform1i shader.uniforms["uTextureSampler"], 0
 
     else
       gl.uniform1i shader.uniforms["uUseTexture"], 0
-
-    gl.uniform1f shader.uniforms["uMaterialShininess"], @shininess
 
     if not @texture_coord
       @texture_coord = gl.createBuffer()
@@ -93,18 +91,43 @@ class Shape
       gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @texture_coord.js ), gl.STATIC_DRAW
       @texture_coord.itemSize = 2
       @texture_coord.numItems = @texture_coord.js.length / @texture_coord.itemSize
-      
+
     gl.bindBuffer gl.ARRAY_BUFFER, @texture_coord
     gl.vertexAttribPointer shader.attributes["aTextureCoord"], @texture_coord.itemSize, gl.FLOAT, false, 0, 0
 
-    gl.bindBuffer gl.ARRAY_BUFFER, @colors
-    gl.vertexAttribPointer shader.attributes["aVertexColor"], @colors.itemSize, gl.FLOAT, false, 0, 0
+    if @normalmap
+      gl.uniform1i shader.uniforms["uUseNormalMap"], 1
+
+      if @normalmap.loaded
+        gl.activeTexture gl.TEXTURE1
+        gl.bindTexture gl.TEXTURE_2D, @normalmap
+        gl.uniform1i shader.uniforms["uNormalSampler"], 1
+
+    else
+      gl.uniform1i shader.uniforms["uUseNormalMap"], 0
+
+    gl.uniform1f shader.uniforms["uMaterialShininess"], @shininess
+
+    if not @normal_coord
+      @normal_coord = gl.createBuffer()
+      gl.bindBuffer gl.ARRAY_BUFFER, @normal_coord
+      @normal_coord.js = []
+      @normal_coord.js.push( 0 ) for [ 1 .. 2 * @vertices.numItems ]
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normal_coord.js ), gl.STATIC_DRAW
+      @normal_coord.itemSize = 2
+      @normal_coord.numItems = @normal_coord.js.length / @normal_coord.itemSize
+      
+    gl.bindBuffer gl.ARRAY_BUFFER, @normal_coord
+    gl.vertexAttribPointer shader.attributes["aNormalCoord"], @normal_coord.itemSize, gl.FLOAT, false, 0, 0
 
     gl.bindBuffer gl.ARRAY_BUFFER, @vertices
     gl.vertexAttribPointer shader.attributes["aVertexPosition"], @vertices.itemSize, gl.FLOAT, false, 0, 0
 
     gl.bindBuffer gl.ARRAY_BUFFER, @normals
     gl.vertexAttribPointer shader.attributes["aVertexNormal"], @normals.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @colors
+    gl.vertexAttribPointer shader.attributes["aVertexColor"], @colors.itemSize, gl.FLOAT, false, 0, 0
 
     gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
     gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
@@ -503,7 +526,7 @@ class TextureCube extends Cube
     @texture = gl.createTexture()
     @texture.loaded = false;
     @texture.image = new Image();
-    @texture.image.onload = -> shape.initTexture( gl )
+    @texture.image.onload = -> shape.initTexture( gl, shape.texture )
     @texture.image.src = texture_url
 
     @texture_coord = gl.createBuffer()
@@ -544,6 +567,57 @@ class TextureCube extends Cube
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @texture_coord.js ), gl.STATIC_DRAW
     @texture_coord.itemSize = 2
     @texture_coord.numItems = @texture_coord.js.length / @texture_coord.itemSize    
+
+class NormalCube extends Cube
+  constructor: (gl,center,normalmap_url) ->
+    super gl, center
+
+    shape = this
+
+    @normalmap = gl.createTexture()
+    @normalmap.loaded = false;
+    @normalmap.image = new Image();
+    @normalmap.image.onload = -> shape.initTexture( gl, shape.normalmap )
+    @normalmap.image.src = normalmap_url
+
+    @normal_coord = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, @normal_coord
+    @normal_coord.js =
+      [
+        # Front
+        0, 0,
+        1, 0,
+        0, 1,
+        1, 1,
+        # Back
+        1, 0,
+        1, 1,
+        0, 0,
+        0, 1,
+        # Right
+        1, 0,
+        1, 1,
+        0, 0,
+        0, 1,
+        # Left
+        0, 0,
+        1, 0,
+        0, 1,
+        1, 1,
+        # Top
+        0, 1,
+        0, 0,
+        1, 1,
+        1, 0,
+        # Bottom
+        1, 1,
+        0, 1,
+        1, 0,
+        0, 0,
+      ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normal_coord.js ), gl.STATIC_DRAW
+    @normal_coord.itemSize = 2
+    @normal_coord.numItems = @normal_coord.js.length / @normal_coord.itemSize    
 
 class Terrain extends Shape
     constructor: (gl,center,terrain_image_url) ->

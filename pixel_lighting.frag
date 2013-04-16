@@ -4,8 +4,10 @@ varying vec3 vLightWeighting;
 
 varying vec4 vColor;
 varying vec2 vTextureCoord;
+varying vec2 vNormalCoord;
 
 uniform bool uUseTexture;
+uniform bool uUseNormalMap;
 
 uniform vec3 uLightPosition;
 
@@ -15,7 +17,8 @@ uniform vec3 uSpecularColor;
 
 uniform float uMaterialShininess;
 
-uniform sampler2D uSampler;
+uniform sampler2D uTextureSampler;
+uniform sampler2D uNormalSampler;
 
 varying vec3 vPosition;
 varying vec3 vTransformedNormal;
@@ -23,13 +26,18 @@ varying vec3 vTransformedNormal;
 void main(void) {
   vec4 color;
   if ( uUseTexture ) {
-    color = texture2D(uSampler,vec2(vTextureCoord.x,vTextureCoord.y));
-  }
-  else {
+    color = texture2D( uTextureSampler, vec2( vTextureCoord.x, vTextureCoord.y ) );
+  } else {
     color = vColor;
   }
 
-  vec3 normal = normalize( vTransformedNormal );
+  vec3 normal;
+
+  if ( uUseNormalMap ) {
+    normal = texture2D( uNormalSampler, vec2( vNormalCoord.x, vNormalCoord.y ) ).xyz * 2.0 - 1.0;
+  } else {
+    normal = normalize( vTransformedNormal );
+  }
 
   vec3 lightDirection = normalize( uLightPosition - vPosition );
 

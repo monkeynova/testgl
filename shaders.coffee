@@ -31,6 +31,7 @@ initNamedShader = (gl,shader_name) ->
       "aVertexNormal",
       "aVertexColor",
       "aTextureCoord",
+      "aNormalCoord",
     ]
 
   shader.attributes = []
@@ -47,8 +48,10 @@ initNamedShader = (gl,shader_name) ->
       "uPMatrix",
       "uMVMatrix",
       "uNMatrix",
-      "uSampler",
+      "uTextureSampler",
       "uUseTexture",
+      "uNormalSampler",
+      "uUseNormalMap",
       "uLightPosition",
       "uAmbientColor",
       "uDirectionalColor",

@@ -2,15 +2,18 @@ attribute vec3 aVertexPosition;
 attribute vec3 aVertexNormal;
 attribute vec4 aVertexColor;
 attribute vec2 aTextureCoord;
+attribute vec2 aNormalCoord;
 
 uniform mat4 uMVMatrix;
 uniform mat3 uNMatrix;
 uniform mat4 uPMatrix;
 
 uniform bool uUseTexture;
+uniform bool uUseNormalMap;
 
 varying vec4 vColor;
 varying vec2 vTextureCoord;
+varying vec2 vNormalCoord;
 
 varying vec3 vLightWeighting;
 
@@ -27,7 +30,12 @@ void main(void) {
     vColor = aVertexColor;
   }
 
+  if ( uUseNormalMap ) {
+    vNormalCoord = aNormalCoord;
+  } else {
+    vTransformedNormal = uNMatrix * aVertexNormal;
+  }
+
   vPosition = mvPosition.xyz;
-  vTransformedNormal = uNMatrix * aVertexNormal;
 }
 
