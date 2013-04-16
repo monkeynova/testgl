@@ -14,7 +14,7 @@ TODO
  - [ ] Joint angle limits
 - [ ] Lighting
  - [X] Fragment lighting
- - [ ] Normal map
+ - [X] Normal map
 - [ ] Physics?
 
 Resources
@@ -25,3 +25,4 @@ Resources
 * OpenGL Shading Language Reference -- http://www.opengl.org/sdk/docs/manglsl/
 * OpenGL Wiki (geometry shader) -- http://www.opengl.org/wiki/Geometry_Shader
 * Game Programming Wiki (Bone System) -- http://content.gpwiki.org/index.php/OpenGL:Tutorials:Basic_Bones_System
+* WebGL: Bump Mapping using normal maps -- http://leinonen.se/2012/07/webgl-bump-mapping/
