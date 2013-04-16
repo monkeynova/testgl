@@ -7,6 +7,7 @@
 #=require <cube.model.dataurl.coffee>
 #=require <sphere.model.dataurl.coffee>
 #=require <torus.model.dataurl.coffee>
+#=require <trefoil.model.dataurl.coffee>
 #=require <humanoid.skel.dataurl.coffee>
 
 $ ->
@@ -66,10 +67,15 @@ $ ->
 #    pyramid.animate 1/3, [ 0, 1, 0 ]
 #    shapes.push pyramid
 
-    sphere_center = [ -1.5, 1, -7 ]
-    sphere = new JSONModel gl, sphere_center, sphere_model_data_url
-    sphere.animate 1/3, [ 0, 1, 0 ]
-    shapes.push sphere
+#    sphere_center = [ -1.5, 1, -7 ]
+#    sphere = new JSONModel gl, sphere_center, sphere_model_data_url
+#    sphere.animate 1/3, [ 0, 1, 0 ]
+#    shapes.push sphere
+
+    trefoil_center = [ -1.5, 1, -7 ]
+    trefoil = new JSONModel gl, trefoil_center, trefoil_model_data_url
+    trefoil.animate 1/3, [ 1, 1, 1 ]
+    shapes.push trefoil
 
 #    cube_center = [ 1.5, 1, -7 ]
 #    cube = new JSONModel gl, cube_center, cube_model_data_url
@@ -78,7 +84,7 @@ $ ->
 
     torus_center = [ 1.5, 1, -7 ]
     torus = new JSONModel gl, torus_center, torus_model_data_url
-    torus.animate 1/3, [ 1, 1, 1 ]
+    torus.animate 1/3, [ 1, 0, 0 ]
     shapes.push torus
 
     terrain_center = [ -64, -5, -128 ]

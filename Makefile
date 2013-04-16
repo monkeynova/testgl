@@ -43,12 +43,9 @@ $(GENERATED)/%.d: % ./tools/mkdep.coffee
 	coffee ./tools/mkdep.coffee $< > $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/sphere.model.js: ./tools/mksphere.coffee
-	coffee ./tools/mksphere.coffee > $@.tmp
-	mv $@.tmp $@
-
-$(GENERATED)/torus.model.js: ./tools/mktorus.coffee
-	coffee ./tools/mktorus.coffee > $@.tmp
+$(GENERATED)/%.model.js: ./tools/mk%.coffee
+	@mkdir -p $(@D)
+	coffee $< > $@.tmp
 	mv $@.tmp $@
 
 $(GENERATED)/terrain.model.js: terrain.png ./tools/image_to_terrain.coffee
