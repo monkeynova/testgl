@@ -15,18 +15,38 @@ class Shape
     @initialized = true
     @shininess = 0
     @shouldDrawNormals = true
+    @use_quats = true
 
   position: (m) ->
     mat4.translate m, @center
-    mat4.rotate m, @angle, @axis if @axis
+
+    if @orientation
+      mat4.multiply m, quat4.toMat4 @orientation
+    else if @axis
+      mat4.rotate m, @angle, @axis
 
   update: (elapsed) ->
-    @angle += @angle_speed * elapsed
+    d_angle = @angle_speed * elapsed
+
+    if @orientation
+      quat_scaled = vec3.create()
+      vec3.scale @axis, Math.sin( d_angle / 2 ), quat_scaled
+      @d_orientation = quat4.create [ quat_scaled[0], quat_scaled[1], quat_scaled[2], Math.cos( d_angle / 2 ) ]
+
+      quat4.multiply @orientation, @d_orientation
+      quat4.normalize @orientation
+    else
+      @angle += d_angle
 
   animate: (rotations_per_second ,axis) ->
-    @angle = 0
     @angle_speed = 2 * Math.PI * rotations_per_second
     @axis = axis
+
+    if @use_quats
+      @orientation = quat4.create [ 0, 0, 0, 1 ]
+    else
+      @angle = 0
+
 
   flatten: (vec_array) -> $.map vec_array, (n) -> n
 

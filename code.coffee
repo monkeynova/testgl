@@ -76,7 +76,7 @@ $ ->
 
     trefoil_center = [ -1.5, 1, -7 ]
     trefoil = new JSONModel gl, trefoil_center, trefoil_model_data_url
-    trefoil.animate 1/3, [ 1, 1, 1 ]
+    trefoil.animate 1/3, [ -1, 1, 1 ]
     shapes.push trefoil
 
 #    cube_center = [ 1.5, 1, -7 ]

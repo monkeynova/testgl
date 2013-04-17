@@ -9,6 +9,9 @@ TODO
 - [ ] Models
  - [ ] Texture in model file
  - [ ] Terrain model from png
+- [ ] Quaternions
+ - [X] Shapes
+ - [ ] Camera
 - [ ] Skeleton system
  - [X] Sample humanoid
  - [ ] Joint angle limits
