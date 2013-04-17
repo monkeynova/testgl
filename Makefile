@@ -25,15 +25,18 @@ $(OUT)/README.html: README.md
 	marked --gfm $< > $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/build_dependencies.d: node_dependencies.txt
+$(GENERATED)/build_dependencies.d: node_dependencies.txt Makefile
 	@mkdir -p $(@D)
 	sort node_dependencies.txt | diff -C 2 --label SORTED - node_dependencies.txt
 	npm bin > /dev/null
 	@for dep in `cat node_dependencies.txt`; \
 	do \
-		npm list $(NPM_OPTS) $$dep | grep empty > /dev/null || continue; \
-		echo npm install $(NPM_OPTS) $$dep; \
-		npm install $(NPM_OPTS) $$dep; \
+		shell_npm_opts=$(NPM_OPTS); \
+		dep=`echo $$dep | perl -ne 's/-local$$// and $$exit = 1; print; exit $$exit'`; \
+		if [ $$? = 1 ]; then shell_npm_opts=; fi; \
+		npm list $$shell_npm_opts $$dep | grep empty > /dev/null || continue; \
+		echo npm install $$shell_npm_opts $$dep; \
+		npm install $$shell_npm_opts $$dep; \
 	done
 	echo > $@.tmp
 	mv $@.tmp $@
