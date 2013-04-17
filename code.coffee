@@ -21,7 +21,7 @@ $ ->
 
   paused = 0
 
-  camera = {}
+  camera = { pos : [ 0, 2, 0 ], orientation : [ 0, 0, 0, 1 ] }
   shapes = []
   pMatrix = null
   mvMatrix = null
@@ -100,10 +100,8 @@ $ ->
     document.onkeydown = (e) -> keyboard[ e.keyCode ] = 1
     document.onkeyup = (e) -> keyboard[ e.keyCode ] = 0
 
-    camera.posX = 0
-    camera.posY = 2
-    camera.posZ = 0
-    camera.yaw = camera.pitch = 0
+    camera.pos = vec3.create camera.pos
+    camera.orientation = quat4.create camera.orientation
 
     status 'Initialized...'
     render()
@@ -125,9 +123,8 @@ $ ->
 
     pushMatrix mvMatrix
 
-    mat4.rotate mvMatrix, camera.pitch, [ 1, 0, 0 ]
-    mat4.rotate mvMatrix, camera.yaw, [ 0, 1, 0 ]
-    mat4.translate mvMatrix, [ -camera.posX, -camera.posY, -camera.posZ ]
+    mat4.multiply mvMatrix, quat4.toMat4 camera.orientation
+    mat4.translate mvMatrix, vec3.scale( camera.pos, -1, vec3.create() )
 
     addLighting vertex_lighting_shader, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
     addLighting pixel_lighting_shader, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
@@ -155,27 +152,29 @@ $ ->
     angularSpeed = 0.03
 
     if keyboard[87] # 'w'
-      camera.posX += linearSpeed * Math.sin( camera.yaw )
-      camera.posZ -= linearSpeed * Math.cos( camera.yaw )
+      vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ 0, 0, -linearSpeed ]
     if keyboard[83] # 's'
-      camera.posX -= linearSpeed * Math.sin( camera.yaw )
-      camera.posZ += linearSpeed * Math.cos( camera.yaw )
+      vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ 0, 0, linearSpeed ]
     if keyboard[65] # 'a'
       if keyboard[16] # shift
-        camera.posX -= linearSpeed * Math.cos( camera.yaw )
-        camera.posZ -= linearSpeed * Math.sin( camera.yaw )
+        vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ -linearSpeed, 0, 0 ]
       else
-        camera.yaw -=angularSpeed
+        quat4.multiply camera.orientation, quat4.create [ 0, Math.sin( angularSpeed / 2 ), 0, Math.cos( angularSpeed / 2 ) ]
     if keyboard[68] # 'd'
       if keyboard[16] # shift
-        camera.posX += linearSpeed * Math.cos( camera.yaw )
-        camera.posZ += linearSpeed * Math.sin( camera.yaw )
+        vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ linearSpeed, 0, 0 ]
       else
-        camera.yaw +=angularSpeed
+        quat4.multiply camera.orientation, quat4.create [ 0, -Math.sin( angularSpeed / 2 ), 0, Math.cos( angularSpeed / 2 ) ]
     if keyboard[69] # 'e'
-      camera.pitch -= angularSpeed
+      if keyboard[16] # shift
+        vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ 0, linearSpeed, 0 ]
+      else
+        quat4.multiply camera.orientation, quat4.create [ Math.sin( angularSpeed / 2 ), 0, 0, Math.cos( angularSpeed / 2 ) ]
     if keyboard[81] # 'q'
-      camera.pitch += angularSpeed
+      if keyboard[16] # shift
+        vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ 0, -linearSpeed, 0 ]
+      else
+        quat4.multiply camera.orientation, quat4.create [ -Math.sin( angularSpeed / 2 ), 0, 0, Math.cos( angularSpeed / 2 ) ]
 
    addLighting = (program,mvMatrix,fullElapsed) ->
     gl.useProgram program
