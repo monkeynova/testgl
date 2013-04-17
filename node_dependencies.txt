@@ -1,4 +1,5 @@
 coffee-script
+coffeescript-concat
 jade
 jslint
 marked
