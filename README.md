@@ -11,7 +11,8 @@ TODO
  - [ ] Terrain model from png
 - [ ] Quaternions
  - [X] Shapes
- - [ ] Camera
+ - [X] Camera
+ - [ ] Re-World-Y
 - [ ] Skeleton system
  - [X] Sample humanoid
  - [ ] Joint angle limits
