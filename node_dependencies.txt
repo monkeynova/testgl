@@ -1,5 +1,6 @@
 coffee-script
 coffeescript-concat
+http-server
 jade
 jslint
 marked

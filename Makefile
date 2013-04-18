@@ -8,6 +8,9 @@ EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js jquery.base64.js
 
 all: $(patsubst %,$(OUT)/%,$(EXT_JS)) $(OUT)/README.html
 
+serve:
+	http-server $(OUT)
+
 clean:
 	rm -rf $(OUT) $(GENERATED)
 

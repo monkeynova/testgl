@@ -30,3 +30,5 @@ Resources
 * OpenGL Wiki (geometry shader) -- http://www.opengl.org/wiki/Geometry_Shader
 * Game Programming Wiki (Bone System) -- http://content.gpwiki.org/index.php/OpenGL:Tutorials:Basic_Bones_System
 * WebGL: Bump Mapping using normal maps -- http://leinonen.se/2012/07/webgl-bump-mapping/
+* Shader Effects: Shadow Mapping -- http://devmaster.net/posts/3002/shader-effects-shadow-mapping
++ Glow Maps -- http://www.nutty.ca/?page_id=352&link=glow
