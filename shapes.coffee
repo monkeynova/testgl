@@ -85,7 +85,7 @@ class Shape
     gl.bindTexture gl.TEXTURE_2D, null
     texture.loaded = true
 
-  draw: (gl,pMatrix,mvMatrix,shaders) ->
+  draw: (gl,pMatrix,vMatrix,shaders) ->
     solidShader = null
     if true || @shininess != 0 || @normalmap
       solidShader = shaders["pixel-lighting"]
@@ -94,11 +94,11 @@ class Shape
 
     gl.useProgram solidShader
 
-    @drawSolid gl, pMatrix, mvMatrix, solidShader
-    @drawWire  gl, pMatrix, mvMatrix, shaders["wire"]
+    @drawSolid gl, pMatrix, vMatrix, solidShader
+    @drawWire  gl, pMatrix, vMatrix, shaders["wire"]
 
 
-  drawSolid: (gl,pMatrix,mvMatrix,shader) ->
+  drawSolid: (gl,pMatrix,vMatrix,shader) ->
     return if ! @initialized
 
     shapeMatrix = @shapeMatrix()
@@ -178,11 +178,11 @@ class Shape
       gl.bindBuffer gl.ARRAY_BUFFER, @tangents
       gl.vertexAttribPointer shader.attributes["aVertexTangent"], @tangents.itemSize, gl.FLOAT, false, 0, 0
 
-    gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
-    gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
-    gl.uniformMatrix4fv shader.uniforms["uShapeMatrix"], false, shapeMatrix
+    gl.uniformMatrix4fv shader.uniforms["uProjectionMatrix"], false, pMatrix
+    gl.uniformMatrix4fv shader.uniforms["uViewMatrix"], false, vMatrix
+    gl.uniformMatrix4fv shader.uniforms["uModelMatrix"], false, shapeMatrix
 
-    shapeMVMatrix = mat4.multiply mvMatrix, shapeMatrix, mat4.create()
+    shapeMVMatrix = mat4.multiply vMatrix, shapeMatrix, mat4.create()
 
     normalMatrix = mat3.create()
     mat4.toInverseMat3 shapeMVMatrix, normalMatrix
@@ -196,12 +196,12 @@ class Shape
     else
       gl.drawArrays @drawtype, 0, @vertices.numItems
 
-  drawWire: (gl,pMatrix,mvMatrix,shader) ->
+  drawWire: (gl,pMatrix,vMatrix,shader) ->
     return if ! @initialized
 
-    @drawNormals gl, pMatrix, mvMatrix, shader if @shouldDrawNormals
+    @drawNormals gl, pMatrix, vMatrix, shader if @shouldDrawNormals
 
-  drawNormals: (gl,pMatrix,mvMatrix,shader) ->
+  drawNormals: (gl,pMatrix,vMatrix,shader) ->
       shapeMatrix = @shapeMatrix()
 
       if ! @normal_points
@@ -226,9 +226,9 @@ class Shape
       gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
       gl.vertexAttribPointer shader.attributes["aVertexPosition"], @normal_points.itemSize, gl.FLOAT, false, 0, 0
 
-      gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
-      gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
-      gl.uniformMatrix4fv shader.uniforms["uShapeMatrix"], false, shapeMatrix
+      gl.uniformMatrix4fv shader.uniforms["uProjectionMatrix"], false, pMatrix
+      gl.uniformMatrix4fv shader.uniforms["uViewMatrix"], false, vMatrix
+      gl.uniformMatrix4fv shader.uniforms["uModelMatrix"], false, shapeMatrix
 
       gl.drawArrays gl.LINES, 0, @normal_points.numItems
 
@@ -831,9 +831,9 @@ class Axes extends Shape
 
     @grid = @buildBuffer gl, @grid_points
 
-  drawSolid: (gl,pMatrix,mvMatrix,shader) ->
+  drawSolid: (gl,pMatrix,vMatrix,shader) ->
 
-  drawWire: (gl,pMatrix,mvMatrix,shader) ->
+  drawWire: (gl,pMatrix,vMatrix,shader) ->
       gl.useProgram shader
 
       gl.uniform4f shader.uniforms["uAmbientColor"], 1, 1, 1, 1
@@ -841,7 +841,7 @@ class Axes extends Shape
       gl.bindBuffer gl.ARRAY_BUFFER, @grid
       gl.vertexAttribPointer shader.attributes["aVertexPosition"], @grid.itemSize, gl.FLOAT, false, 0, 0
 
-      gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
-      gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
+      gl.uniformMatrix4fv shader.uniforms["uProjectionMatrix"], false, pMatrix
+      gl.uniformMatrix4fv shader.uniforms["uViewMatrix"], false, vMatrix
 
       gl.drawArrays gl.LINES, 0, @grid.numItems

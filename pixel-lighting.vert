@@ -5,10 +5,10 @@ attribute vec4 aVertexColor;
 attribute vec2 aTextureCoord;
 attribute vec2 aNormalCoord;
 
-uniform mat4 uShapeMatrix;
-uniform mat4 uMVMatrix;
+uniform mat4 uModelMatrix;
+uniform mat4 uViewMatrix;
 uniform mat3 uNMatrix;
-uniform mat4 uPMatrix;
+uniform mat4 uProjectionMatrix;
 
 uniform bool uUseTexture;
 uniform bool uUseNormalMap;
@@ -19,13 +19,18 @@ varying vec2 vNormalCoord;
 
 varying vec3 vLightWeighting;
 
-varying vec3 vPosition;
 varying vec3 vTransformedNormal;
 varying vec3 vTransformedTangent;
 
+varying vec3 vWorldPosition;
+varying vec3 vViewPosition;
+
 void main(void) {
-  vec4 mvPosition = uMVMatrix * uShapeMatrix * vec4( aVertexPosition, 1.0 );
-  gl_Position = uPMatrix * mvPosition;
+  vec4 fullWorldPosition = uModelMatrix * vec4( aVertexPosition, 1.0 );
+  vWorldPosition = fullWorldPosition.xyz;
+
+  vec4 mvPosition = uViewMatrix * fullWorldPosition;
+  gl_Position = uProjectionMatrix * mvPosition;
 
   if ( uUseTexture ) {
     vTextureCoord = aTextureCoord;
@@ -40,6 +45,6 @@ void main(void) {
 
   vTransformedNormal = uNMatrix * aVertexNormal;
 
-  vPosition = mvPosition.xyz;
+  vViewPosition = mvPosition.xyz;
 }
 

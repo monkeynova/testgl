@@ -21,13 +21,14 @@ uniform vec3 uSpecularColor;
 
 uniform float uMaterialShininess;
 
-uniform mat4 uMVMatrix;
+uniform mat4 uViewMatrix;
 
 uniform sampler2D uTextureSampler;
 uniform sampler2D uNormalSampler;
 uniform sampler2D uShadowSampler;
 
-varying vec3 vPosition;
+varying vec3 vViewPosition;
+varying vec3 vWorldPosition;
 varying vec3 vTransformedNormal;
 varying vec3 vTransformedTangent;
 
@@ -55,7 +56,7 @@ void main(void) {
     normal = normalize( vTransformedNormal );
   }
 
-  vec3 toLight = (uMVMatrix * vec4( uLightPosition, 1 ) ).xyz - vPosition;
+  vec3 toLight = (uViewMatrix * vec4( uLightPosition, 1 ) ).xyz - vViewPosition;
   bool inShadow = false;
 
   if ( uUseShadowTexture ) {
@@ -85,7 +86,7 @@ void main(void) {
     vec3 lightDirection = normalize( toLight );
 
     if ( uMaterialShininess != 0.0 ) {
-      vec3 eyeDirection = normalize( -vPosition );
+      vec3 eyeDirection = normalize( -vViewPosition );
       vec3 reflectDirection = reflect( -lightDirection, normal );
       specularLighting = pow( max( dot( reflectDirection, eyeDirection ), 0.0 ), uMaterialShininess );
     }

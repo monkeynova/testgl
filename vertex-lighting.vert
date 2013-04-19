@@ -3,10 +3,10 @@ attribute vec3 aVertexNormal;
 attribute vec4 aVertexColor;
 attribute vec2 aTextureCoord;
 
-uniform mat4 uShapeMatrix;
-uniform mat4 uMVMatrix;
+uniform mat4 uModelMatrix;
+uniform mat4 uViewMatrix;
 uniform mat3 uNMatrix;
-uniform mat4 uPMatrix;
+uniform mat4 uProjectionMatrix;
 
 uniform bool uUseTexture;
 
@@ -22,8 +22,8 @@ uniform vec3 uDirectionalColor;
 uniform vec3 uSpecularColor;
 
 void main(void) {
-  vec4 mvPosition = uMVMatrix * uShapeMatrix * vec4( aVertexPosition, 1.0 );
-  gl_Position = uPMatrix * mvPosition;
+  vec4 mvPosition = uViewMatrix * uModelMatrix * vec4( aVertexPosition, 1.0 );
+  gl_Position = uProjectionMatrix * mvPosition;
 
   if ( uUseTexture ) {
     vTextureCoord = aTextureCoord;
@@ -33,7 +33,7 @@ void main(void) {
 
   vec3 normal = uNMatrix * aVertexNormal;
 
-  vec3 lightDirection = normalize( (uMVMatrix * vec4( uLightPosition, 1 )).xyz - mvPosition.xyz );
+  vec3 lightDirection = normalize( (uViewMatrix * vec4( uLightPosition, 1 )).xyz - mvPosition.xyz );
   float directionalWeighting = max( dot( normal, lightDirection ), 0.0 );
 
   vLightWeighting = uAmbientColor + uDirectionalColor * directionalWeighting;

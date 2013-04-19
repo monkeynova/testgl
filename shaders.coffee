@@ -46,9 +46,9 @@ initNamedShader = (gl,shader_name) ->
 
   uniform_names =
     [
-      "uPMatrix",
-      "uMVMatrix",
-      "uShapeMatrix",
+      "uProjectionMatrix",
+      "uViewMatrix",
+      "uModelMatrix",
       "uNMatrix",
       "uTextureSampler",
       "uUseTexture",

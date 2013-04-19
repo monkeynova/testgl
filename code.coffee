@@ -30,7 +30,7 @@ $ ->
   screen = null
   shapes = []
   pMatrix = null
-  mvMatrix = null
+  vMatrix = null
   lightSphere = null
 
   matrixStack = []
@@ -127,18 +127,18 @@ $ ->
 
     updateInput camera, keyboard
 
-    mat4.identity mvMatrix
-    mat4.multiply mvMatrix, quat4.toMat4 camera.orientation
-    mat4.translate mvMatrix, vec3.scale( camera.pos, -1, vec3.create() )
+    mat4.identity vMatrix
+    mat4.multiply vMatrix, quat4.toMat4 camera.orientation
+    mat4.translate vMatrix, vec3.scale( camera.pos, -1, vec3.create() )
 
-    addLighting shaders, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
+    addLighting shaders, vMatrix, (now.getTime() - startDate.getTime()) / 1000
 
     gl.viewport 0, 0, canvas.width, canvas.height
     gl.clearColor 0.5, 0.8, 1, 1
     gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
     for s in shapes
-      s.draw gl, pMatrix, mvMatrix, shaders
+      s.draw gl, pMatrix, vMatrix, shaders
 
     renderShadowTexture shaders
 
@@ -185,7 +185,7 @@ $ ->
     vec3.add camera.pos, linearMove if linearMove
     quat4.multiply camera.orientation, angularMove if angularMove
 
-   addLighting = (shaders,mvMatrix,fullElapsed) ->
+   addLighting = (shaders,vMatrix,fullElapsed) ->
 
     lightAngle = fullElapsed * 2 * Math.PI / 10
     lighting.position = vec3.create [ 50 * Math.cos( lightAngle ), 50, 50 * Math.sin( lightAngle ) ]
@@ -209,7 +209,7 @@ $ ->
       gl.uniform1f shader.uniforms["uShadowTexture"], 0
 
       gl.uniformMatrix4fv shader.uniforms["uLightPMatrix"], false, lighting.pMatrix
-      gl.uniformMatrix4fv shader.uniforms["uLightMVMatrix"], false, lighting.mvMatrix
+      gl.uniformMatrix4fv shader.uniforms["uLightMVMatrix"], false, lighting.vMatrix
 
   renderShadowTexture = (shaders) ->
     drawScreen( shaders, lighting.texture, 1 - 0.2 / canvas.aspect, 0.8, 0.2 / canvas.aspect, 0.2 )
@@ -229,11 +229,11 @@ $ ->
     gl.clearColor 0, 0, 0, 1
     gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
-    lighting.mvMatrix = mat4.lookAt lighting.position, [ 0, 0, 0 ], [ 0, 1, 0 ]
+    lighting.vMatrix = mat4.lookAt lighting.position, [ 0, 0, 0 ], [ 0, 1, 0 ]
 
     for s in shapes
       if s != lightSphere
-        s.drawSolid gl, lighting.pMatrix, lighting.mvMatrix, shader # TODO: rethink peeking
+        s.drawSolid gl, lighting.pMatrix, lighting.vMatrix, shader # TODO: rethink peeking
 
     gl.bindTexture gl.TEXTURE_2D, lighting.texture
     gl.generateMipmap gl.TEXTURE_2D
@@ -339,7 +339,7 @@ $ ->
     pMatrix = mat4.create()
     mat4.perspective 45, canvas.aspect, 0.1, 100, pMatrix
 
-    mvMatrix = mat4.create()
-    mat4.identity mvMatrix
+    vMatrix = mat4.create()
+    mat4.identity vMatrix
 
   initialize()
