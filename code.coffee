@@ -211,35 +211,42 @@ $ ->
       gl.uniform3fv program.uniforms["uSpecularColor"], lighting.specular
 
   renderShadowTexture = (shaders) ->
-    drawScreen( shaders, lighting.texture, 0.9, 0.9, 0.1, 0.1 )
+    drawScreen( shaders, lighting.texture, 1 - 0.2 / canvas.aspect, 0.8, 0.2 / canvas.aspect, 0.2 )
 
   buildShadowTexture = (shaders) ->
     shader = shaders["shadow"]
 
     if ! shader
+      console.error "no shadow shader"
       return;
 
     gl.bindFramebuffer gl.FRAMEBUFFER, lighting.framebuffer
 
-    gl.clearColor 1, 0, 0, 1
+    gl.useProgram shader
+
+    gl.viewport( 0, 0, lighting.framebuffer.width, lighting.framebuffer.height )
+    gl.clearColor 0, 0, 0, 1
     gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
     lighting.mvMatrix = mat4.lookAt lighting.position, [ 0, 0, 0 ], [ 0, 1, 0 ]
 
-    gl.useProgram shader
-
     for s in shapes
+      continue if s == lightSphere
       pushMatrix lighting.mvMatrix
       s.drawSolid gl, lighting.pMatrix, lighting.mvMatrix, shader # TODO: rethink peeking
       popMatrix lighting.mvMatrix
+
+    gl.bindTexture gl.TEXTURE_2D, lighting.texture
+    gl.generateMipmap gl.TEXTURE_2D
+    gl.bindTexture gl.TEXTURE_2D, null
 
     gl.bindFramebuffer gl.FRAMEBUFFER, null
 
   initLighting = ->
     lighting.framebuffer = gl.createFramebuffer()
     gl.bindFramebuffer gl.FRAMEBUFFER, lighting.framebuffer
-    lighting.framebuffer.width = 64
-    lighting.framebuffer.height = 64
+    lighting.framebuffer.width = 256
+    lighting.framebuffer.height = 256
 
     lighting.texture = gl.createTexture()
     gl.bindTexture gl.TEXTURE_2D, lighting.texture
@@ -258,6 +265,7 @@ $ ->
     gl.framebufferTexture2D gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, lighting.texture, 0
     gl.framebufferRenderbuffer gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, lighting.renderbuffer
 
+    gl.bindRenderbuffer gl.RENDERBUFFER, null
     gl.bindFramebuffer gl.FRAMEBUFFER, null
 
     lighting.pMatrix = mat4.perspective 90, 1, 0.1, 100
@@ -327,9 +335,10 @@ $ ->
     return if canvas.clientWidth == canvas.width && canvas.clientHeight == canvas.height
     canvas.width = canvas.clientWidth
     canvas.height = canvas.clientHeight
+    canvas.aspect = canvas.width / canvas.height
 
     pMatrix = mat4.create()
-    mat4.perspective 45, canvas.width / canvas.height, 0.1, 100, pMatrix
+    mat4.perspective 45, canvas.aspect, 0.1, 100, pMatrix
 
     mvMatrix = mat4.create()
     mat4.identity mvMatrix

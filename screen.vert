@@ -8,6 +8,6 @@ uniform vec2 u2DStride;
 
 void main(void) {
   vTextureCoord = aTextureCoord;
-  gl_Position = vec4( aVertexPosition * u2DStride + u2DOffset, 0, 1 );
+  gl_Position = vec4( aVertexPosition * u2DStride + u2DOffset, 0.1, 1 );
 }
 
