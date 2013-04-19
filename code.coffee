@@ -127,8 +127,7 @@ $ ->
 
     updateInput camera, keyboard
 
-    pushMatrix mvMatrix
-
+    mat4.identity mvMatrix
     mat4.multiply mvMatrix, quat4.toMat4 camera.orientation
     mat4.translate mvMatrix, vec3.scale( camera.pos, -1, vec3.create() )
 
@@ -139,11 +138,7 @@ $ ->
     gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
     for s in shapes
-      pushMatrix mvMatrix
       s.draw gl, pMatrix, mvMatrix, shaders
-      popMatrix mvMatrix
-
-    popMatrix mvMatrix
 
     renderShadowTexture shaders
 
@@ -194,21 +189,27 @@ $ ->
 
     lightAngle = fullElapsed * 2 * Math.PI / 10
     lighting.position = vec3.create [ 50 * Math.cos( lightAngle ), 50, 50 * Math.sin( lightAngle ) ]
+    lightSphere.center = lighting.position
 
     initLighting() if ! lighting.initialized
 
     buildShadowTexture( shaders )
 
-    lightSphere.center = lighting.position
-    mvLightPosition = mat4.multiplyVec3 mvMatrix, lighting.position, vec3.create()
+    for shader in [ shaders["vertex-lighting"], shaders["pixel-lighting"] ]
+      gl.useProgram shader
 
-    for program in [ shaders["vertex-lighting"], shaders["pixel-lighting"] ]
-      gl.useProgram program
+      gl.uniform3fv shader.uniforms["uLightPosition"], lighting.position
+      gl.uniform3fv shader.uniforms["uAmbientColor"], lighting.ambient
+      gl.uniform3fv shader.uniforms["uDirectionalColor"], lighting.directional
+      gl.uniform3fv shader.uniforms["uSpecularColor"], lighting.specular
 
-      gl.uniform3fv program.uniforms["uLightPosition"], mvLightPosition
-      gl.uniform3fv program.uniforms["uAmbientColor"], lighting.ambient
-      gl.uniform3fv program.uniforms["uDirectionalColor"], lighting.directional
-      gl.uniform3fv program.uniforms["uSpecularColor"], lighting.specular
+      gl.uniform1f shader.uniforms["uUseShadowTexture"], false
+      gl.activeTexture gl.TEXTURE0
+      gl.bindTexture gl.TEXTURE_2D, lighting.texture
+      gl.uniform1f shader.uniforms["uShadowTexture"], 0
+
+      gl.uniformMatrix4fv shader.uniforms["uLightPMatrix"], false, lighting.pMatrix
+      gl.uniformMatrix4fv shader.uniforms["uLightMVMatrix"], false, lighting.mvMatrix
 
   renderShadowTexture = (shaders) ->
     drawScreen( shaders, lighting.texture, 1 - 0.2 / canvas.aspect, 0.8, 0.2 / canvas.aspect, 0.2 )
@@ -231,10 +232,8 @@ $ ->
     lighting.mvMatrix = mat4.lookAt lighting.position, [ 0, 0, 0 ], [ 0, 1, 0 ]
 
     for s in shapes
-      continue if s == lightSphere
-      pushMatrix lighting.mvMatrix
-      s.drawSolid gl, lighting.pMatrix, lighting.mvMatrix, shader # TODO: rethink peeking
-      popMatrix lighting.mvMatrix
+      if s != lightSphere
+        s.drawSolid gl, lighting.pMatrix, lighting.mvMatrix, shader # TODO: rethink peeking
 
     gl.bindTexture gl.TEXTURE_2D, lighting.texture
     gl.generateMipmap gl.TEXTURE_2D

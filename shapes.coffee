@@ -17,13 +17,18 @@ class Shape
     @shouldDrawNormals = true
     @use_quats = true
 
-  position: (m) ->
+  shapeMatrix: ->
+    m = mat4.create()
+
+    mat4.identity m
     mat4.translate m, @center
 
     if @orientation
       mat4.multiply m, quat4.toMat4 @orientation
     else if @axis
       mat4.rotate m, @angle, @axis
+
+    return m
 
   update: (elapsed) ->
     d_angle = @angle_speed * elapsed
@@ -82,7 +87,7 @@ class Shape
 
   draw: (gl,pMatrix,mvMatrix,shaders) ->
     solidShader = null
-    if @shininess != 0 || @normalmap
+    if true || @shininess != 0 || @normalmap
       solidShader = shaders["pixel-lighting"]
     else
       solidShader = shaders["vertex-lighting"]
@@ -96,15 +101,15 @@ class Shape
   drawSolid: (gl,pMatrix,mvMatrix,shader) ->
     return if ! @initialized
 
-    @position mvMatrix
+    shapeMatrix = @shapeMatrix()
 
     if @texture
       gl.uniform1i shader.uniforms["uUseTexture"], 1
 
       if @texture.loaded
-        gl.activeTexture gl.TEXTURE0
+        gl.activeTexture gl.TEXTURE1
         gl.bindTexture gl.TEXTURE_2D, @texture
-        gl.uniform1i shader.uniforms["uTextureSampler"], 0
+        gl.uniform1i shader.uniforms["uTextureSampler"], 1
 
     else
       gl.uniform1i shader.uniforms["uUseTexture"], 0
@@ -126,9 +131,9 @@ class Shape
       gl.uniform1i shader.uniforms["uUseNormalMap"], 1
 
       if @normalmap.loaded
-        gl.activeTexture gl.TEXTURE1
+        gl.activeTexture gl.TEXTURE2
         gl.bindTexture gl.TEXTURE_2D, @normalmap
-        gl.uniform1i shader.uniforms["uNormalSampler"], 1
+        gl.uniform1i shader.uniforms["uNormalSampler"], 2
 
     else
       gl.uniform1i shader.uniforms["uUseNormalMap"], 0
@@ -175,9 +180,12 @@ class Shape
 
     gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
     gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
+    gl.uniformMatrix4fv shader.uniforms["uShapeMatrix"], false, shapeMatrix
+
+    shapeMVMatrix = mat4.multiply mvMatrix, shapeMatrix, mat4.create()
 
     normalMatrix = mat3.create()
-    mat4.toInverseMat3 mvMatrix, normalMatrix
+    mat4.toInverseMat3 shapeMVMatrix, normalMatrix
     mat3.transpose normalMatrix
 
     gl.uniformMatrix3fv shader.uniforms["uNMatrix"], false, normalMatrix
@@ -194,6 +202,8 @@ class Shape
     @drawNormals gl, pMatrix, mvMatrix, shader if @shouldDrawNormals
 
   drawNormals: (gl,pMatrix,mvMatrix,shader) ->
+      shapeMatrix = @shapeMatrix()
+
       if ! @normal_points
         @normal_points = gl.createBuffer()
         @normal_points.js = []
@@ -218,6 +228,7 @@ class Shape
 
       gl.uniformMatrix4fv shader.uniforms["uPMatrix"], false, pMatrix
       gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
+      gl.uniformMatrix4fv shader.uniforms["uShapeMatrix"], false, shapeMatrix
 
       gl.drawArrays gl.LINES, 0, @normal_points.numItems
 
