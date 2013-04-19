@@ -38,9 +38,10 @@ class Shape
     else
       @angle += d_angle
 
-  animate: (rotations_per_second ,axis) ->
+  animate: (rotations_per_second, axis) ->
     @angle_speed = 2 * Math.PI * rotations_per_second
     @axis = axis
+    vec3.normalize @axis
 
     if @use_quats
       @orientation = quat4.create [ 0, 0, 0, 1 ]
@@ -48,13 +49,13 @@ class Shape
       @angle = 0
 
 
-  flatten: (vec_array) -> $.map vec_array, (n) -> n
+  flattenVectorArray: (vec_array) -> $.map vec_array, (n) -> n
 
   buildBuffer: (gl,js) ->
     buffer = gl.createBuffer()
     buffer.itemSize = js[0].length
     buffer.numItems = js.length
-    buffer.js = @flatten js
+    buffer.js = @flattenVectorArray js
     gl.bindBuffer gl.ARRAY_BUFFER, buffer
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( buffer.js ), gl.STATIC_DRAW
 
@@ -63,7 +64,7 @@ class Shape
   buildElementBuffer: (gl,js) ->
     buffer = gl.createBuffer()
     buffer.itemSize = 1
-    buffer.js = @flatten js
+    buffer.js = @flattenVectorArray js
     buffer.numItems = buffer.js.length
     gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, buffer
     gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( buffer.js ), gl.STATIC_DRAW
@@ -79,18 +80,23 @@ class Shape
     gl.bindTexture gl.TEXTURE_2D, null
     texture.loaded = true
 
-  drawSolid: (gl,pMatrix,mvMatrix,vertex_lighting_shader,pixel_lighting_shader) ->
+  draw: (gl,pMatrix,mvMatrix,shaders) ->
+    solidShader = null
+    if @shininess != 0 || @normalmap
+      solidShader = shaders["pixel-lighting"]
+    else
+      solidShader = shaders["vertex-lighting"]
+
+    gl.useProgram solidShader
+
+    @drawSolid gl, pMatrix, mvMatrix, solidShader
+    @drawWire  gl, pMatrix, mvMatrix, shaders["wire"]
+
+
+  drawSolid: (gl,pMatrix,mvMatrix,shader) ->
     return if ! @initialized
 
     @position mvMatrix
-
-    shader = null
-    if @shininess != 0 || @normalmap
-      shader = pixel_lighting_shader
-    else
-      shader = vertex_lighting_shader
-
-    gl.useProgram shader
 
     if @texture
       gl.uniform1i shader.uniforms["uUseTexture"], 1
@@ -214,7 +220,6 @@ class Shape
       gl.uniformMatrix4fv shader.uniforms["uMVMatrix"], false, mvMatrix
 
       gl.drawArrays gl.LINES, 0, @normal_points.numItems
-
 
 class Triangle extends Shape        
   constructor: (gl,center) ->

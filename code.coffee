@@ -22,11 +22,16 @@ $ ->
   paused = 0
 
   camera = { pos : [ 0, 2, 0 ], orientation : [ 0, 0, 0, 1 ] }
+  lighting = {
+      ambient : [ 0.2, 0.2, 0.2 ],
+      directional : [ 0.6, 0.6, 0.6 ],
+      specular : [ 1, 1, 1 ],
+    }
+  screen = null
   shapes = []
   pMatrix = null
   mvMatrix = null
   lightSphere = null
-  lightPosition = null
 
   matrixStack = []
 
@@ -52,7 +57,6 @@ $ ->
       return
 
     gl.enable gl.DEPTH_TEST
-    gl.clearColor 0.5, 0.8, 1, 1
 
     #gl.blendFunc gl.SRC_ALPHA, gl.ONE
     #gl.enable gl.BLEND;
@@ -113,11 +117,13 @@ $ ->
     return if paused
 
     reshape()
-    gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
     now = new Date()
     elapsed = if lastRenderDate then (now.getTime() - lastRenderDate.getTime()) / 1000 else 0
     lastRenderDate = now
+
+    for s in shapes
+      s.update elapsed
 
     updateInput camera, keyboard
 
@@ -126,18 +132,20 @@ $ ->
     mat4.multiply mvMatrix, quat4.toMat4 camera.orientation
     mat4.translate mvMatrix, vec3.scale( camera.pos, -1, vec3.create() )
 
-    addLighting vertex_lighting_shader, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
-    addLighting pixel_lighting_shader, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
+    addLighting shaders, mvMatrix, (now.getTime() - startDate.getTime()) / 1000
+
+    gl.viewport 0, 0, canvas.width, canvas.height
+    gl.clearColor 0.5, 0.8, 1, 1
+    gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
 
     for s in shapes
-      s.update elapsed
-
       pushMatrix mvMatrix
-      s.drawSolid gl, pMatrix, mvMatrix, vertex_lighting_shader, pixel_lighting_shader
-      s.drawWire  gl, pMatrix, mvMatrix, wire_shader
+      s.draw gl, pMatrix, mvMatrix, shaders
       popMatrix mvMatrix
 
     popMatrix mvMatrix
+
+    renderShadowTexture shaders
 
     fps = if elapsed then 1  / elapsed else 0
 
@@ -151,49 +159,174 @@ $ ->
     linearSpeed = 0.20
     angularSpeed = 0.03
 
+    linearMove = null
+    angularMove = null
+
     if keyboard[87] # 'w'
-      vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ 0, 0, -linearSpeed ]
+      linearMove = quat4.multiplyVec3 camera.orientation, vec3.create [ 0, 0, -linearSpeed ]
     if keyboard[83] # 's'
-      vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ 0, 0, linearSpeed ]
+      linearMove = quat4.multiplyVec3 camera.orientation, vec3.create [ 0, 0, linearSpeed ]
     if keyboard[65] # 'a'
       if keyboard[16] # shift
-        vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ -linearSpeed, 0, 0 ]
+        linearMove = quat4.multiplyVec3 camera.orientation, vec3.create [ -linearSpeed, 0, 0 ]
       else
-        quat4.multiply camera.orientation, quat4.create [ 0, Math.sin( angularSpeed / 2 ), 0, Math.cos( angularSpeed / 2 ) ]
+        angularMove = quat4.create [ 0, Math.sin( angularSpeed / 2 ), 0, Math.cos( angularSpeed / 2 ) ]
     if keyboard[68] # 'd'
       if keyboard[16] # shift
-        vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ linearSpeed, 0, 0 ]
+        linearMove = quat4.multiplyVec3 camera.orientation, vec3.create [ linearSpeed, 0, 0 ]
       else
-        quat4.multiply camera.orientation, quat4.create [ 0, -Math.sin( angularSpeed / 2 ), 0, Math.cos( angularSpeed / 2 ) ]
+        angularMove = quat4.create [ 0, -Math.sin( angularSpeed / 2 ), 0, Math.cos( angularSpeed / 2 ) ]
     if keyboard[69] # 'e'
       if keyboard[16] # shift
-        vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ 0, linearSpeed, 0 ]
+        linearMove = quat4.multiplyVec3 camera.orientation, vec3.create [ 0, linearSpeed, 0 ]
       else
-        quat4.multiply camera.orientation, quat4.create [ Math.sin( angularSpeed / 2 ), 0, 0, Math.cos( angularSpeed / 2 ) ]
+        angularMove = quat4.create [ Math.sin( angularSpeed / 2 ), 0, 0, Math.cos( angularSpeed / 2 ) ]
     if keyboard[81] # 'q'
       if keyboard[16] # shift
-        vec3.add camera.pos, quat4.multiplyVec3 camera.orientation, vec3.create [ 0, -linearSpeed, 0 ]
+        linearMove = quat4.multiplyVec3 camera.orientation, vec3.create [ 0, -linearSpeed, 0 ]
       else
-        quat4.multiply camera.orientation, quat4.create [ -Math.sin( angularSpeed / 2 ), 0, 0, Math.cos( angularSpeed / 2 ) ]
+        angularMove = quat4.create [ -Math.sin( angularSpeed / 2 ), 0, 0, Math.cos( angularSpeed / 2 ) ]
 
-   addLighting = (program,mvMatrix,fullElapsed) ->
-    gl.useProgram program
+    vec3.add camera.pos, linearMove if linearMove
+    quat4.multiply camera.orientation, angularMove if angularMove
+
+   addLighting = (shaders,mvMatrix,fullElapsed) ->
 
     lightAngle = fullElapsed * 2 * Math.PI / 10
-    lightPosition = vec3.create [ 50 * Math.cos( lightAngle ), 50, 50 * Math.sin( lightAngle ) ]
-    lightSphere.center = lightPosition
-    mat4.multiplyVec3 mvMatrix, lightPosition
+    lighting.position = vec3.create [ 50 * Math.cos( lightAngle ), 50, 50 * Math.sin( lightAngle ) ]
 
-    gl.uniform3fv program.uniforms["uLightPosition"], lightPosition
-    gl.uniform3f program.uniforms["uAmbientColor"], 0.2, 0.2, 0.2
-    gl.uniform3f program.uniforms["uDirectionalColor"], 0.6, 0.6, 0.6
-    gl.uniform3f program.uniforms["uSpecularColor"], 1, 1, 1
+    initLighting() if ! lighting.initialized
+
+    buildShadowTexture( shaders )
+
+    lightSphere.center = lighting.position
+    mvLightPosition = mat4.multiplyVec3 mvMatrix, lighting.position, vec3.create()
+
+    for program in [ shaders["vertex-lighting"], shaders["pixel-lighting"] ]
+      gl.useProgram program
+
+      gl.uniform3fv program.uniforms["uLightPosition"], mvLightPosition
+      gl.uniform3fv program.uniforms["uAmbientColor"], lighting.ambient
+      gl.uniform3fv program.uniforms["uDirectionalColor"], lighting.directional
+      gl.uniform3fv program.uniforms["uSpecularColor"], lighting.specular
+
+  renderShadowTexture = (shaders) ->
+    drawScreen( shaders, lighting.texture, 0.9, 0.9, 0.1, 0.1 )
+
+  buildShadowTexture = (shaders) ->
+    shader = shaders["shadow"]
+
+    if ! shader
+      return;
+
+    gl.bindFramebuffer gl.FRAMEBUFFER, lighting.framebuffer
+
+    gl.clearColor 1, 0, 0, 1
+    gl.clear gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
+
+    lighting.mvMatrix = mat4.lookAt lighting.position, [ 0, 0, 0 ], [ 0, 1, 0 ]
+
+    gl.useProgram shader
+
+    for s in shapes
+      pushMatrix lighting.mvMatrix
+      s.drawSolid gl, lighting.pMatrix, lighting.mvMatrix, shader # TODO: rethink peeking
+      popMatrix lighting.mvMatrix
+
+    gl.bindFramebuffer gl.FRAMEBUFFER, null
+
+  initLighting = ->
+    lighting.framebuffer = gl.createFramebuffer()
+    gl.bindFramebuffer gl.FRAMEBUFFER, lighting.framebuffer
+    lighting.framebuffer.width = 64
+    lighting.framebuffer.height = 64
+
+    lighting.texture = gl.createTexture()
+    gl.bindTexture gl.TEXTURE_2D, lighting.texture
+    gl.texImage2D gl.TEXTURE_2D, 0, gl.RGBA,
+      lighting.framebuffer.width, lighting.framebuffer.height,
+      0, gl.RGBA, gl.UNSIGNED_BYTE, null
+    gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR
+    gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST
+    gl.generateMipmap gl.TEXTURE_2D
+    gl.bindTexture gl.TEXTURE_2D, null
+
+    lighting.renderbuffer = gl.createRenderbuffer()
+    gl.bindRenderbuffer gl.RENDERBUFFER, lighting.renderbuffer
+    gl.renderbufferStorage gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, lighting.framebuffer.width, lighting.framebuffer.height
+
+    gl.framebufferTexture2D gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, lighting.texture, 0
+    gl.framebufferRenderbuffer gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, lighting.renderbuffer
+
+    gl.bindFramebuffer gl.FRAMEBUFFER, null
+
+    lighting.pMatrix = mat4.perspective 90, 1, 0.1, 100
+
+    lighting.initialized = true
+
+
+  drawScreen = (shaders, texture, x, y, width, height ) ->
+    if ! screen
+      initScreen()
+
+    shader = shaders["screen"]
+
+    if ! shader
+      console.error "no screen shader"
+      return
+
+    gl.useProgram shader
+
+    gl.activeTexture gl.TEXTURE0
+    gl.bindTexture gl.TEXTURE_2D, texture
+    gl.uniform1i shader.uniforms["uTextureSampler"], 0
+
+    gl.uniform2f shader.uniforms["u2DOffset"], x, y
+    gl.uniform2f shader.uniforms["u2DStride"], width, height
+
+    gl.bindBuffer gl.ARRAY_BUFFER, screen.vertices
+    gl.vertexAttribPointer shader.attributes["aVertexPosition"], screen.vertices.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.bindBuffer gl.ARRAY_BUFFER, screen.texture
+    gl.vertexAttribPointer shader.attributes["aTextureCoord"], screen.texture.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, screen.index
+    gl.drawElements gl.TRIANGLES, screen.index.numItems, gl.UNSIGNED_SHORT, 0
+
+  initScreen = ->
+    screen = {}
+
+    vertices = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, vertices
+    vertices.js = [ 0, 0, 0, 1, 1, 0, 1, 1 ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( vertices.js ), gl.STATIC_DRAW
+    vertices.itemSize = 2
+    vertices.numItems = vertices.js.length / vertices.itemSize
+
+    screen.vertices = vertices
+
+    texture = gl.createBuffer()
+    gl.bindBuffer gl.ARRAY_BUFFER, texture
+    texture.js = [ 0, 0, 0, 1, 1, 0, 1, 1 ]
+    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( texture.js ), gl.STATIC_DRAW
+    texture.itemSize = 2
+    texture.numItems = texture.js.length / texture.itemSize
+
+    screen.texture = texture
+
+    index = gl.createBuffer()
+    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, index
+    index.js = [ 0, 1, 2, 1, 2, 3 ]
+    gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( index.js ), gl.STATIC_DRAW
+    index.itemSize = 1
+    index.numItems = index.js.length / index.itemSize
+
+    screen.index = index
 
   reshape = ->
     return if canvas.clientWidth == canvas.width && canvas.clientHeight == canvas.height
     canvas.width = canvas.clientWidth
     canvas.height = canvas.clientHeight
-    gl.viewport 0, 0, canvas.width, canvas.height
 
     pMatrix = mat4.create()
     mat4.perspective 45, canvas.width / canvas.height, 0.1, 100, pMatrix

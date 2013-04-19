@@ -6,7 +6,9 @@ NPM_OPTS=$(shell echo $(NPM) | grep ~ > /dev/null && echo -g)
 
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js jquery.base64.js
 
-all: $(patsubst %,$(OUT)/%,$(EXT_JS)) $(OUT)/README.html
+SOURCE_FILES=index.jade code.coffee
+
+all: $(EXT_JS:%=$(OUT)/%) $(OUT)/README.html
 
 serve:
 	http-server $(OUT)
@@ -20,8 +22,7 @@ neat:
 	rm -f .\#*
 
 include $(GENERATED)/build_dependencies.d
-include $(GENERATED)/index.jade.d
-include $(GENERATED)/code.coffee.d
+include $(SOURCE_FILES:%=$(GENERATED)/%.d)
 
 $(OUT)/README.html: README.md
 	@mkdir -p $(@D)

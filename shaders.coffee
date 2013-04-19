@@ -1,12 +1,12 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-vertex_lighting_shader = null
-pixel_lighting_shader = null
-wire_shader = null
+shaders = []
 
 initShaders = (gl) ->
-  vertex_lighting_shader = initNamedShader gl, 'shader'
-  pixel_lighting_shader = initNamedShader gl, 'pixel-lighting'
-  wire_shader = initNamedShader gl, 'wire'
+  shaders["pixel-lighting"] = initNamedShader gl, 'pixel-lighting'
+  shaders["screen"] = initNamedShader gl, 'screen'
+  shaders["shadow"] = initNamedShader gl, 'shadow'
+  shaders["vertex-lighting"] = initNamedShader gl, 'vertex-lighting'
+  shaders["wire"] = initNamedShader gl, 'wire'
 
 initNamedShader = (gl,shader_name) ->
   shader = null
@@ -58,6 +58,8 @@ initNamedShader = (gl,shader_name) ->
       "uDirectionalColor",
       "uSpecularColor",
       "uMaterialShininess",
+      "u2DOffset",
+      "u2DStride",
     ]
 
   shader.uniforms = []
