@@ -10,9 +10,6 @@ uniform bool uUseTexture;
 uniform bool uUseNormalMap;
 uniform bool uUseShadowTexture;
 
-uniform mat4 uLightPMatrix;
-uniform mat4 uLightMVMatrix;
-
 uniform vec3 uLightPosition;
 
 uniform vec3 uAmbientColor;
@@ -29,6 +26,7 @@ uniform sampler2D uShadowSampler;
 
 varying vec3 vViewPosition;
 varying vec3 vWorldPosition;
+varying vec4 vShadowPosition;
 varying vec3 vTransformedNormal;
 varying vec3 vTransformedTangent;
 
@@ -60,23 +58,16 @@ void main(void) {
 
   if ( uUseShadowTexture ) {
     float lightDistance = length( uLightPosition - vWorldPosition );
+    float lightDistanceForShadow = lightDistance / 200.;
 
-    vec4 projectedLight = uLightPMatrix * uLightMVMatrix * vec4( vWorldPosition, 1 );
-    gl_FragColor = vec4( projectedLight.x / projectedLight.w, projectedLight.y / projectedLight.w, 0, 1 );
-    return;
-
-    vec2 shadowCoord = projectedLight.xy / projectedLight.w;
-
-    vec4 shadowDistanceColor = texture2D( uShadowSampler, shadowCoord );
+    vec4 shadowDistanceColor = texture2D( uShadowSampler, vShadowPosition.xy / vShadowPosition.w );
 
     float shadowDistance = shadowDistanceColor.r +
       shadowDistanceColor.g / 256.0 +
       shadowDistanceColor.b / (256.0 * 256.0) +
       shadowDistanceColor.a / (256.0 * 256.0 * 256.0);
 
-    shadowDistance = shadowDistance * 200.0;
-
-    if ( shadowDistance < lightDistance ) {
+    if ( shadowDistance < lightDistanceForShadow ) {
       inShadow = true;
     }
   }

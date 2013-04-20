@@ -22,14 +22,19 @@ varying vec3 vLightWeighting;
 varying vec3 vTransformedNormal;
 varying vec3 vTransformedTangent;
 
+varying vec4 vShadowPosition;
 varying vec3 vWorldPosition;
 varying vec3 vViewPosition;
 
-void main(void) {
-  vec4 fullWorldPosition = uModelMatrix * vec4( aVertexPosition, 1.0 );
-  vWorldPosition = fullWorldPosition.xyz;
+uniform mat4 uLightPMatrix;
+uniform mat4 uLightMVMatrix;
 
-  vec4 mvPosition = uViewMatrix * fullWorldPosition;
+const mat4 cScaleMatrix = mat4(0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0);
+
+void main(void) {
+  vec4 worldPosition = uModelMatrix * vec4( aVertexPosition, 1.0 );
+
+  vec4 mvPosition = uViewMatrix * worldPosition;
   gl_Position = uProjectionMatrix * mvPosition;
 
   if ( uUseTexture ) {
@@ -46,5 +51,7 @@ void main(void) {
   vTransformedNormal = uNMatrix * aVertexNormal;
 
   vViewPosition = mvPosition.xyz;
+  vWorldPosition = worldPosition.xyz;
+  vShadowPosition = cScaleMatrix * uLightPMatrix * uLightMVMatrix * worldPosition;
 }
 

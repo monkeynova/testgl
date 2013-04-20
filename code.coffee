@@ -203,7 +203,7 @@ $ ->
       gl.uniform3fv shader.uniforms["uDirectionalColor"], lighting.directional
       gl.uniform3fv shader.uniforms["uSpecularColor"], lighting.specular
 
-      gl.uniform1f shader.uniforms["uUseShadowTexture"], false
+      gl.uniform1f shader.uniforms["uUseShadowTexture"], true
       gl.activeTexture gl.TEXTURE0
       gl.bindTexture gl.TEXTURE_2D, lighting.texture
       gl.uniform1f shader.uniforms["uShadowTexture"], 0
@@ -244,8 +244,8 @@ $ ->
   initLighting = ->
     lighting.framebuffer = gl.createFramebuffer()
     gl.bindFramebuffer gl.FRAMEBUFFER, lighting.framebuffer
-    lighting.framebuffer.width = 256
-    lighting.framebuffer.height = 256
+    lighting.framebuffer.width = 1024
+    lighting.framebuffer.height = 1024
 
     lighting.texture = gl.createTexture()
     gl.bindTexture gl.TEXTURE_2D, lighting.texture
