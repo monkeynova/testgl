@@ -212,7 +212,7 @@ $ ->
       gl.uniformMatrix4fv shader.uniforms["uLightMVMatrix"], false, lighting.vMatrix
 
   renderShadowTexture = (shaders) ->
-    drawScreen( shaders, lighting.texture, 1 - 0.2 / canvas.aspect, 0.8, 0.2 / canvas.aspect, 0.2 )
+    drawScreen( shaders, lighting.texture, 1 - 0.2, 1 - 0.2 * canvas.aspect, 0.2, 0.2 * canvas.aspect )
 
   buildShadowTexture = (shaders) ->
     shader = shaders["shadow"]
@@ -267,7 +267,7 @@ $ ->
     gl.bindRenderbuffer gl.RENDERBUFFER, null
     gl.bindFramebuffer gl.FRAMEBUFFER, null
 
-    lighting.pMatrix = mat4.perspective 90, 1, 0.1, 100
+    lighting.pMatrix = mat4.perspective 90, 1, 0.1, 200
 
     lighting.initialized = true
 
@@ -337,7 +337,7 @@ $ ->
     canvas.aspect = canvas.width / canvas.height
 
     pMatrix = mat4.create()
-    mat4.perspective 45, canvas.aspect, 0.1, 100, pMatrix
+    mat4.perspective 45, canvas.aspect, 0.1, 200, pMatrix
 
     vMatrix = mat4.create()
     mat4.identity vMatrix

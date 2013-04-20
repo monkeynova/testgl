@@ -56,23 +56,25 @@ void main(void) {
     normal = normalize( vTransformedNormal );
   }
 
-  vec3 toLight = (uViewMatrix * vec4( uLightPosition, 1 ) ).xyz - vViewPosition;
   bool inShadow = false;
 
   if ( uUseShadowTexture ) {
-    float lightDistance = length( toLight );
+    float lightDistance = length( uLightPosition - vWorldPosition );
 
-    vec4 projectedLight = uLightPMatrix * uLightMVMatrix * vec4( -toLight, 1 );
-
-    vec4 shadowDistanceColor = texture2D( uShadowSampler, projectedLight.xy / projectedLight.w );
-
-    gl_FragColor = shadowDistanceColor;
+    vec4 projectedLight = uLightPMatrix * uLightMVMatrix * vec4( vWorldPosition, 1 );
+    gl_FragColor = vec4( projectedLight.x / projectedLight.w, projectedLight.y / projectedLight.w, 0, 1 );
     return;
+
+    vec2 shadowCoord = projectedLight.xy / projectedLight.w;
+
+    vec4 shadowDistanceColor = texture2D( uShadowSampler, shadowCoord );
 
     float shadowDistance = shadowDistanceColor.r +
       shadowDistanceColor.g / 256.0 +
       shadowDistanceColor.b / (256.0 * 256.0) +
       shadowDistanceColor.a / (256.0 * 256.0 * 256.0);
+
+    shadowDistance = shadowDistance * 200.0;
 
     if ( shadowDistance < lightDistance ) {
       inShadow = true;
@@ -83,6 +85,7 @@ void main(void) {
   float specularLighting = 0.0;
 
   if ( ! inShadow ) {
+    vec3 toLight = (uViewMatrix * vec4( uLightPosition, 1 ) ).xyz - vViewPosition;
     vec3 lightDirection = normalize( toLight );
 
     if ( uMaterialShininess != 0.0 ) {

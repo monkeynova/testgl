@@ -3,7 +3,7 @@ precision mediump float;
 varying vec4 vPosition;
 
 void main(void) {
-  float dist = length( vPosition ) / 99.9;
+  float dist = length( vPosition ) / 200.0;
 
   gl_FragColor = vec4(
                       dist,
