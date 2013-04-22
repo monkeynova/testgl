@@ -60,15 +60,20 @@ void main(void) {
     float lightDistance = length( uLightPosition - vWorldPosition );
     float lightDistanceForShadow = lightDistance / 200.;
 
-    vec4 shadowDistanceColor = texture2D( uShadowSampler, vShadowPosition.xy / vShadowPosition.w );
+    vec2 shadowLookup = vShadowPosition.xy / vShadowPosition.w;
 
-    float shadowDistance = shadowDistanceColor.r +
-      shadowDistanceColor.g / 256.0 +
-      shadowDistanceColor.b / (256.0 * 256.0) +
-      shadowDistanceColor.a / (256.0 * 256.0 * 256.0);
+    if ( shadowLookup.x > 0.01 && shadowLookup.y > 0.01 &&
+         shadowLookup.x < 0.99 && shadowLookup.y < 0.99 ) {
+      vec4 shadowDistanceColor = texture2D( uShadowSampler, shadowLookup );
 
-    if ( shadowDistance < lightDistanceForShadow ) {
-      inShadow = true;
+      float shadowDistance = shadowDistanceColor.r +
+        shadowDistanceColor.g / 256.0 +
+        shadowDistanceColor.b / (256.0 * 256.0) +
+        shadowDistanceColor.a / (256.0 * 256.0 * 256.0);
+
+      if ( shadowDistance < lightDistanceForShadow * 0.98 ) {
+        inShadow = true;
+      }
     }
   }
 
