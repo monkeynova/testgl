@@ -2,7 +2,7 @@ OUT=build
 GENERATED=.generated
 
 NPM=$(shell which npm)
-NPM_OPTS=$(shell echo $(NPM) | grep -P 'cygdrive|~' > /dev/null && echo -g)
+NPM_OPTS=$(shell echo $(NPM) | grep -P 'cygdrive|~|home' > /dev/null && echo -g)
 
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js jquery.base64.js
 
