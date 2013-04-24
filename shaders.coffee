@@ -1,10 +1,12 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-default_shader = null
-wire_shader = null
+shaders = []
 
 initShaders = (gl) ->
-  default_shader = initNamedShader gl, 'shader'
-  wire_shader = initNamedShader gl, 'wire'
+  shaders["pixel-lighting"] = initNamedShader gl, 'pixel-lighting'
+  shaders["screen"] = initNamedShader gl, 'screen'
+  shaders["shadow"] = initNamedShader gl, 'shadow'
+  shaders["vertex-lighting"] = initNamedShader gl, 'vertex-lighting'
+  shaders["wire"] = initNamedShader gl, 'wire'
 
 initNamedShader = (gl,shader_name) ->
   shader = null
@@ -27,29 +29,42 @@ initNamedShader = (gl,shader_name) ->
     [
       "aVertexPosition",
       "aVertexNormal",
+      "aVertexTangent",
       "aVertexColor",
       "aTextureCoord",
+      "aNormalCoord",
     ]
 
   shader.attributes = []
 
   for name in attribute_names
     location = gl.getAttribLocation shader, name
+    console.log shader_name + ": " + name + "=" + location
     if location >= 0
       shader.attributes[name] = location
       gl.enableVertexAttribArray shader.attributes[name]
-      console.log shader_name + ": " + name + "=" + shader.attributes[name]        
 
   uniform_names =
     [
-      "uPMatrix",
-      "uMVMatrix",
+      "uProjectionMatrix",
+      "uViewMatrix",
+      "uModelMatrix",
       "uNMatrix",
-      "uSampler",
+      "uTextureSampler",
       "uUseTexture",
+      "uNormalSampler",
+      "uUseNormalMap",
+      "uShadowSampler",
+      "uUseShadowTexture",
+      "uLightPMatrix",
+      "uLightMVMatrix",
       "uLightPosition",
       "uAmbientColor",
       "uDirectionalColor",
+      "uSpecularColor",
+      "uMaterialShininess",
+      "u2DOffset",
+      "u2DStride",
     ]
 
   shader.uniforms = []
@@ -76,7 +91,7 @@ getShader = (gl, id) ->
   gl.compileShader shader
 
   if ( ! gl.getShaderParameter( shader, gl.COMPILE_STATUS ) )
-    alert gl.getShaderInfoLog( shader )
+    alert "error compiling " + id + "\n" + gl.getShaderInfoLog( shader )
     return
 
   return shader      

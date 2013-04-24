@@ -7,12 +7,12 @@ varying vec2 vTextureCoord;
 
 uniform bool uUseTexture;
 
-uniform sampler2D uSampler;
+uniform sampler2D uTextureSampler;
 
 void main(void) {
   vec4 color;
   if ( uUseTexture ) {
-    color = texture2D(uSampler,vec2(vTextureCoord.x,vTextureCoord.y));
+    color = texture2D(uTextureSampler,vec2(vTextureCoord.x,vTextureCoord.y));
   }
   else {
     color = vColor;

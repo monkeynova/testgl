@@ -11,15 +11,30 @@ html
     script(src='./webgl-utils.js')
     script(src='./code.js')
 
-    script#shader-fs(type="x-shader/x-fragment")
-      include shader.frag
-    script#shader-vs(type="x-shader/x-vertex")
-      include shader.vert
+    script#vertex-lighting-fs(type="x-shader/x-fragment")
+      include vertex-lighting.frag
+    script#vertex-lighting-vs(type="x-shader/x-vertex")
+      include vertex-lighting.vert
+
+    script#pixel-lighting-fs(type="x-shader/x-fragment")
+      include pixel-lighting.frag
+    script#pixel-lighting-vs(type="x-shader/x-vertex")
+      include pixel-lighting.vert
 
     script#wire-fs(type="x-shader/x-fragment")
       include wire.frag
     script#wire-vs(type="x-shader/x-vertex")
       include wire.vert
+
+    script#shadow-fs(type="x-shader/x-fragment")
+      include shadow.frag
+    script#shadow-vs(type="x-shader/x-vertex")
+      include shadow.vert
+
+    script#screen-fs(type="x-shader/x-fragment")
+      include screen.frag
+    script#screen-vs(type="x-shader/x-vertex")
+      include screen.vert
 
     :stylus
       body
