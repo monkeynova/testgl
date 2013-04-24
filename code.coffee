@@ -78,6 +78,12 @@ $ ->
     lightSphere = new JSONModel gl, sphere_center, sphere_model_data_url
     shapes.push lightSphere
 
+#    armadillo_center = [ 0, 1, -7 ]
+#    armadillo = new JSONModel gl, armadillo_center, "armadillo.model.js"
+#    armadillo.scale [ 1/60, 1/60, 1/60 ]
+#    armadillo.animate 1/3, [ 0, 1, 0 ]
+#    shapes.push armadillo
+
     trefoil_center = [ -1.5, 1, -7 ]
     trefoil = new JSONModel gl, trefoil_center, trefoil_model_data_url
     trefoil.animate 1/3, [ -1, 1, 1 ]

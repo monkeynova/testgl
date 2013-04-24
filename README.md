@@ -33,3 +33,11 @@ Resources
 * Shader Effects: Shadow Mapping -- http://devmaster.net/posts/3002/shader-effects-shadow-mapping
 * Glow Maps -- http://www.nutty.ca/?page_id=352&link=glow
 * The Standford Models -- http://graphics.stanford.edu/data/3Dscanrep/
+* THREE.js -- http://threejs.org/ http://github.com/mrdoob/three.js/
+
+Attribution
+-----------
+
+* Heavy sampling from http://learningwebgl.com/blog/?p=11
+* Armadillo.ply originally from http://graphics.stanford.edu/data/3Dscanrep/
+* dodecahedron.ply, octahedron.ply -- http://people.sc.fsu.edu/~jburkardt/data/ply/ply.html

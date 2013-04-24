@@ -6,9 +6,11 @@ NPM_OPTS=$(shell echo $(NPM) | grep -P 'cygdrive|~' > /dev/null && echo -g)
 
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js jquery.base64.js
 
+MODELS=armadillo
+
 SOURCE_FILES=index.jade code.coffee
 
-all: $(EXT_JS:%=$(OUT)/%) $(OUT)/README.html
+all: $(EXT_JS:%=$(OUT)/%) $(MODELS:%=$(OUT)/%.model.js) $(OUT)/README.html
 
 serve:
 	http-server $(OUT)
@@ -53,6 +55,16 @@ $(GENERATED)/%.d: % ./tools/mkdep.coffee
 $(GENERATED)/%.model.js: ./tools/mk%.coffee
 	@mkdir -p $(@D)
 	coffee $< > $@.tmp
+	mv $@.tmp $@
+
+$(OUT)/%.model.js: $(GENERATED)/%.model.js
+	@mkdir -p $(@D)
+	cp $< $@.tmp
+	mv $@.tmp $@
+
+$(GENERATED)/%.model.js: ./%.ply ./tools/ply2json.coffee
+	@mkdir -p $(@D)
+	coffee ./tools/ply2json.coffee $< > $@.tmp
 	mv $@.tmp $@
 
 $(GENERATED)/terrain.model.js: terrain.png ./tools/image_to_terrain.coffee

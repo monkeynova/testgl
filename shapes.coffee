@@ -14,7 +14,7 @@ class Shape
     @center = center
     @initialized = true
     @shininess = 0
-    @shouldDrawNormals = true
+    @shouldDrawNormals = false
     @use_quats = true
 
   shapeMatrix: ->
@@ -22,6 +22,7 @@ class Shape
 
     mat4.identity m
     mat4.translate m, @center
+    mat4.scale m, @_scale if @_scale
 
     if @orientation
       mat4.multiply m, quat4.toMat4 @orientation
@@ -29,6 +30,9 @@ class Shape
       mat4.rotate m, @angle, @axis
 
     return m
+
+  scale: (v) ->
+    @_scale = v
 
   update: (elapsed) ->
     d_angle = @angle_speed * elapsed
@@ -54,7 +58,12 @@ class Shape
       @angle = 0
 
 
-  flattenVectorArray: (vec_array) -> $.map vec_array, (n) -> n
+  flattenVectorArray: (vec_array) ->
+    ret = []
+    for v in vec_array
+      for p in v
+        ret.push p
+    return ret
 
   buildBuffer: (gl,js) ->
     buffer = gl.createBuffer()
@@ -327,9 +336,16 @@ class JSONModel extends Shape
         for v in [ 0 .. @model.vertices.length / 3 ]
           @model.triangles.push [ 3 * v, 3 * v + 1, 3 * v + 2 ]
 
+      if @model.vertices.length > 65535
+        tris_32bit = @model.triangles
+        @model.triangles = []
+        for t in tris_32bit
+          if t[0] < 65536 && t[1] < 65536 && t[2] < 65536
+            @model.triangles.push t
+
       @index = @buildElementBuffer gl, @model.triangles
 
-      if ! @model.normals
+      if ! @model.normals || @model.normals.length == 0
         @model.normals = []
         for t in @model.triangles
           v1 = vec3.create @model.vertices[ t[1] ]
