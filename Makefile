@@ -62,7 +62,7 @@ $(OUT)/%.model.js: $(GENERATED)/%.model.js
 	cp $< $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/%.model.js: ./%.ply ./tools/ply2json.coffee
+$(GENERATED)/%.model.js: ./%.ply ./tools/ply2json.coffee ./tools/ply.coffee
 	@mkdir -p $(@D)
 	coffee ./tools/ply2json.coffee $< > $@.tmp
 	mv $@.tmp $@
