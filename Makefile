@@ -15,6 +15,9 @@ all: $(EXT_JS:%=$(OUT)/%) $(MODELS:%=$(OUT)/%.model.js) $(OUT)/README.html
 serve:
 	http-server $(OUT)
 
+test:
+	prove -r tests
+
 clean:
 	rm -rf $(OUT) $(GENERATED)
 

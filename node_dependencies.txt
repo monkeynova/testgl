@@ -6,4 +6,4 @@ jslint
 marked
 pngjs-local
 stylus
-tap
+tap-local
