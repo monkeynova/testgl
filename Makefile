@@ -52,7 +52,7 @@ $(GENERATED)/%.d: % ./tools/mkdep.coffee
 	coffee ./tools/mkdep.coffee $< > $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/%.model.js: ./tools/mk%.coffee
+$(GENERATED)/%.model.js: ./tools/mk%.coffee ./tools/vec.coffee
 	@mkdir -p $(@D)
 	coffee $< > $@.tmp
 	mv $@.tmp $@
@@ -67,7 +67,7 @@ $(GENERATED)/%.model.js: ./%.ply ./tools/ply2json.coffee ./tools/ply.coffee
 	coffee ./tools/ply2json.coffee $< > $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/terrain.model.js: terrain.png ./tools/image_to_terrain.coffee
+$(GENERATED)/terrain.model.js: terrain.png ./tools/image_to_terrain.coffee ./tools/vec.coffee
 	coffee ./tools/image_to_terrain.coffee $< > $@.tmp
 	mv $@.tmp $@
 
@@ -76,7 +76,7 @@ $(GENERATED)/%.dataurl.coffee: %.png ./tools/dataurl.coffee
 	coffee ./tools/dataurl.coffee $(patsubst %.png,%,$(<F))_data_url $< > $@.tmp
 	mv $@.tmp $@
 
-$(GENERATED)/wave_bumpmap.png: ./tools/mkwave_bumpmap.coffee
+$(GENERATED)/wave_bumpmap.png: ./tools/mkwave_bumpmap.coffee ./tools/vec.coffee
 	@mkdir -p $(@D)
 	coffee $< $@.tmp
 	mv $@.tmp $@

@@ -3,6 +3,7 @@
 
 fs = require 'fs'
 PNG = require( 'pngjs' ).PNG
+vec = require './vec.coffee'
 
 filename = process.argv[2]
 
@@ -45,7 +46,7 @@ fs.readFile filename, (err,data) ->
         vec_di = [ next_i - prev_i, heights[next_i][j] - heights[prev_i][j], 0 ]
         vec_dj = [ 0, heights[i][next_j] - heights[i][prev_j], -(next_j - prev_j) ]
 
-        normal = normalize cross( vec_di, vec_dj )
+        normal = vec.normalize vec.cross( vec_di, vec_dj )
 
         model.normals.push [ normal[0], normal[1], normal[2] ]
 
@@ -62,10 +63,3 @@ fs.readFile filename, (err,data) ->
           model.triangles.push [ base + height, base + 1, base + height + 1 ]
 
     console.log JSON.stringify model, null, 2
-
-cross = (v1,v2) ->
-  return [ v1[1] * v2[2] - v2[1] * v1[2], -(v1[0] * v2[2] - v1[2] * v2[0]), v1[0] * v2[1] - v1[1] * v2[0] ]
-
-normalize = (v) ->
-  scale = 1 / Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] )
-  return [ v[0] * scale, v[1] * scale, v[2] * scale ]
