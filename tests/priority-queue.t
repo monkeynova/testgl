@@ -77,3 +77,33 @@ test "invalidate item", (t) ->
   for expect, i in should
     is_deeply( t, queue.pop(), expect, "invalidate item #{i}" )
   t.end()
+
+test "remove item", (t) ->
+  queue = new pq (a,b) -> a.error - b.error
+
+  items = [
+      { error : 1, name : "a", id : 1 },
+      { error : 2, name : "b", id : 2 },
+      { error : 3, name : "c", id : 3 },
+      { error : 4, name : "d", id : 4 },
+      { error : 5, name : "e", id : 5 },
+    ]
+
+  for tem,i in items
+    i.toString = -> i
+
+  for i in items
+    queue.push i
+
+  queue.removeItem items[2]
+
+  should = [
+      { error : 1, name : "a", id : 1 },
+      { error : 2, name : "b", id : 2 },
+      { error : 4, name : "d", id : 4 },
+      { error : 5, name : "e", id : 5 },
+    ]
+
+  for expect, i in should
+    is_deeply( t, queue.pop(), expect, "invalidate item #{i}" )
+  t.end()

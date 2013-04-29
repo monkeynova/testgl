@@ -78,26 +78,26 @@ $ ->
     lightSphere = new JSONModel gl, sphere_center, sphere_model_data_url
     shapes.push lightSphere
 
-#    armadillo_center = [ 0, 1, -7 ]
-#    armadillo = new JSONModel gl, armadillo_center, "armadillo.model.js"
-#    armadillo.scale [ 1/60, 1/60, 1/60 ]
-#    armadillo.animate 1/3, [ 0, 1, 0 ]
-#    shapes.push armadillo
+    armadillo_center = [ 0, 1, -7 ]
+    armadillo = new JSONModel gl, armadillo_center, "armadillo.1000.model.js"
+    armadillo.scale [ 1/60, 1/60, 1/60 ]
+    armadillo.animate 1/3, [ 0, 1, 0 ]
+    shapes.push armadillo
 
-    trefoil_center = [ -1.5, 1, -7 ]
-    trefoil = new JSONModel gl, trefoil_center, trefoil_model_data_url
-    trefoil.animate 1/3, [ -1, 1, 1 ]
-    shapes.push trefoil
+#    trefoil_center = [ -1.5, 1, -7 ]
+#    trefoil = new JSONModel gl, trefoil_center, trefoil_model_data_url
+#    trefoil.animate 1/3, [ -1, 1, 1 ]
+#    shapes.push trefoil
 
 #    cube_center = [ 1.5, 1, -7 ]
 #    cube = new JSONModel gl, cube_center, cube_model_data_url
 #    cube.animate 1/10, [ 1, 1, 1 ]
 #    shapes.push cube
 
-    cube_center = [ 1.5, 1, -7 ]
-    cube = new NormalCube gl, cube_center, wave_bumpmap_data_url
-    cube.animate 1/10, [ 1, 1, 1 ]
-    shapes.push cube
+#    cube_center = [ 1.5, 1, -7 ]
+#    cube = new NormalCube gl, cube_center, wave_bumpmap_data_url
+#    cube.animate 1/10, [ 1, 1, 1 ]
+#    shapes.push cube
 
 #    torus_center = [ 1.5, 1, -7 ]
 #    torus = new JSONModel gl, torus_center, torus_model_data_url

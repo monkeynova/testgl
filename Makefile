@@ -6,7 +6,7 @@ NPM_OPTS=$(shell echo $(NPM) | grep -P 'cygdrive|~|home' > /dev/null && echo -g)
 
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js jquery.base64.js
 
-MODELS=armadillo
+MODELS=armadillo armadillo.1000
 
 SOURCE_FILES=index.jade code.coffee
 
@@ -63,6 +63,10 @@ $(GENERATED)/%.model.js: ./tools/mk%.coffee ./tools/vec.coffee
 $(OUT)/%.model.js: $(GENERATED)/%.model.js
 	@mkdir -p $(@D)
 	cp $< $@.tmp
+	mv $@.tmp $@
+
+$(OUT)/%.1000.model.js: $(OUT)/%.model.js
+	coffee ./tools/simplify-model.coffee $< $@.tmp 1000
 	mv $@.tmp $@
 
 $(GENERATED)/%.model.js: ./%.ply ./tools/ply2json.coffee ./tools/ply.coffee

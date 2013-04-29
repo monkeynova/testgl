@@ -10,6 +10,7 @@ class PriorityQueue
 
   pop: ->
     item = @peek()
+    delete @reverse[ item.id ] if item
 
     if @list.length <= 1
       @list = []
@@ -32,17 +33,33 @@ class PriorityQueue
   peek: ->
     return @list[0]
 
-  invalidateItem: (item) ->
+  _item2pos: (item) ->
     if item.id == undefined
       throw new Error "invalidateItem cannot be called on items with no id"
 
     pos = @reverse[item.id]
 
     if pos == undefined
-      throw new Error "invalidating item not in queue?"
+      throw new Error "item not in queue?"
 
     if @list[pos] != item
-      throw new Error "reverse index is inconsistent"
+      throw new Error "reverse index is inconsistent " + JSON.stringify( @list[pos] ) + " != " + JSON.stringify( item )
+
+    return pos
+
+  removeItem: (item) ->
+    pos = @_item2pos item
+
+    @_swap pos, @list.length - 1
+    @list.pop()
+    delete @reverse[ item.id ]
+
+    @_heapify_down pos
+
+    return
+
+  invalidateItem: (item) ->
+    pos = @_item2pos item
 
     if ! @_heapify_up pos
       @_heapify_down pos
