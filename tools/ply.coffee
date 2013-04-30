@@ -81,13 +81,13 @@ parse_body_ascii = (header,reader) ->
 
       for property in element.properties
         if property.isList
-          size = words.shift()
+          size = read_typeAscii( words.shift(), property.size_type )
           build = []
           for j in [ 1 .. size ]
-            build.push words.shift()
+            build.push read_typeAscii( words.shift(), property.type )
           cur_store[ property.name ] = build  
         else
-          cur_store[ property.name ] = words.shift()
+          cur_store[ property.name ] = read_typeAscii( words.shift(), property.type )
 
   if words.length != 0
     throw new Error "buffer not fully consumed #{words.length} != 0"
@@ -119,32 +119,43 @@ parse_body_binary_big_endian = (header,reader) ->
 
   return body
 
+read_typeAscii = (str,type) ->
+  val = 0
+  switch type
+    when "char", "uchar", "short", "ushort", "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32"
+      val = parseInt( str, "10" )
+    when "float", "double", "float32", "float64"
+      val = parseFloat( str, "10" )
+      size = 4
+
+  return val
+
 read_typeBE = (reader,type) ->
   val = 0
   size = 0
   switch type
-    when "char"
+    when "char", "int8"
       val = reader.buffer.readInt8( reader.offset )
       size = 1
-    when "uchar"
+    when "uchar", "uint8"
       val = reader.buffer.readUInt8( reader.offset )
       size = 1
-    when "short"
+    when "short", "int16"
       val = reader.buffer.readInt16BE( reader.offset )
       size = 2
-    when "ushort"
+    when "ushort", "uint16"
       val = reader.buffer.readUInt16BE( reader.offset )
       size = 2
-    when "int"
+    when "int", "int32"
       val = reader.buffer.readInt32BE( reader.offset )
       size = 4
-    when "uint"
+    when "uint", "uint32"
       val = reader.buffer.readUInt32BE( reader.offset )
       size = 4
-    when "float"
+    when "float", "float32"
       val = reader.buffer.readFloatBE( reader.offset )
       size = 4
-    when "double"
+    when "double", "float64"
       val = reader.buffer.readDoubleBE( reader.offset )
       size = 8
 
