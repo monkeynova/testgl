@@ -3,22 +3,27 @@
 class PriorityQueue
   constructor: (cmp) ->
     @_cmp = cmp
-    @list = []
+    @list = [ 'null' ]
     @reverse = []
+    @paranoid = false
 
-  size: -> @list.length
+  doAssert: -> @paranoid = true
+
+  size: -> @list.length - 1
 
   pop: ->
     item = @peek()
     delete @reverse[ item.id ] if item
 
-    if @list.length <= 1
-      @list = []
+    if @list.length <= 2
+      @list = [ 'null' ]
       @reverse = []
     else
-      @list[0] = @list.pop()
-      @reverse[ @list[0].id ] = 0
-      @_heapify_down 0
+      @list[1] = @list.pop()
+      @reverse[ @list[1].id ] = 1
+      @_heapify_down 1
+
+    @assert() if @paranoid
 
     return item
 
@@ -28,10 +33,25 @@ class PriorityQueue
 
     @_heapify_up @list.length - 1
 
+    @assert() if @paranoid
+
     return
 
   peek: ->
-    return @list[0]
+    return @list[1]
+
+  assert: ->
+    i = 1
+    while 2 * i + 1 < @list.length
+      if @_cmp( @list[i], @list[ 2 * i ] ) > 0
+        throw new Error "cmp( #{i}, #{2 * i} ) > 0"
+      if @_cmp( @list[i], @list[ 2 * i + 1 ] ) > 0
+        throw new Error "cmp( #{i}, #{2 * i} ) > 0"
+      i++
+
+    if 2 * i < @list.length
+      if @_cmp( @list[i], @list[ 2 * i ] ) > 0
+        throw new Error "cmp( #{i}, #{2 * i} ) > 0"
 
   _item2pos: (item) ->
     if item.id == undefined
@@ -50,11 +70,17 @@ class PriorityQueue
   removeItem: (item) ->
     pos = @_item2pos item
 
-    @_swap pos, @list.length - 1
+    if pos != @list.length - 1
+      @_swap pos, @list.length - 1
+
     @list.pop()
     delete @reverse[ item.id ]
 
-    @_heapify_down pos
+    if pos < @list.length - 1
+      if ! @_heapify_up pos
+        @_heapify_down pos
+
+    @assert() if @paranoid
 
     return
 
@@ -64,12 +90,14 @@ class PriorityQueue
     if ! @_heapify_up pos
       @_heapify_down pos
 
+    @assert() if @paranoid
+
     return
 
   _heapify_up: (pos) ->
     ret = false
 
-    while pos > 0
+    while pos > 1
       parent = Math.floor(pos/2)
       if @_cmp( @list[parent], @list[pos] ) < 0
         break
@@ -82,14 +110,23 @@ class PriorityQueue
   _heapify_down: (pos) ->
     ret = false
     while 2 * pos + 1 < @list.length
-      if @_cmp( @list[pos], @list[2*pos] ) > 0
+      if @_cmp( @list[pos], @list[2*pos + 1] ) > 0 # 2n+1 is better
+        if @_cmp( @list[2 * pos], @list[2*pos + 1] ) < 0 # 2n is best
+          pos = @_swap pos, 2 * pos
+          ret = true
+        else # 2n + 1 is best
+          pos = @_swap pos, 2 * pos + 1
+          ret = true  
+      else if @_cmp( @list[pos], @list[2*pos] ) > 0  # 2n is better, 2n+1 is not
         pos = @_swap pos, 2 * pos
-        ret = true
-      else if @_cmp( @list[pos], @list[2*pos + 1] ) > 0
-        pos = @_swap pos, 2 * pos + 1
         ret = true
       else
         break
+
+    if 2 * pos < @list.length
+      if @_cmp( @list[pos], @list[2*pos] ) > 0  # 2n is better, 2n+1 doesn't exist
+        pos = @_swap pos, 2 * pos
+        ret = true
 
     return ret
 

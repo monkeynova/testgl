@@ -3,6 +3,9 @@ build
 node_modules
 .generated
 
+# Profiling tempfile
+v8.log
+
 # Emacs temp files
 *~
 .#*

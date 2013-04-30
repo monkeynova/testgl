@@ -14,7 +14,7 @@ class Shape
     @center = center
     @initialized = true
     @shininess = 0
-    @shouldDrawNormals = true
+    @shouldDrawNormals = false
     @use_quats = true
 
   shapeMatrix: ->
@@ -381,7 +381,7 @@ class JSONModel extends Shape
             @model.normals[i] = [ 0, 0, 0 ]
           else
             combined = @model.normals[i].reduce (a,b) -> vec3.add( a, b, vec3.create() )
-            vec3.scale combined, 1 / @model.normals[i].length
+            vec3.normalize combined
             @model.normals[i] = [ combined[0], combined[1], combined[2] ]
             
 

@@ -20,16 +20,16 @@ fs.readFile in_filename, (err,data) ->
   die err if err
 
   console.log "Parsing..."
-  complex = JSON.parse data
+  model = JSON.parse data
 
   console.log "Simplifying..."
-  simple = simplify complex, target_triangles
+  simplify model, target_triangles
 
   console.log "Writing..."
-  fs.writeFile out_filename, JSON.stringify( simple, null, 2 ), (err) ->
+  fs.writeFile out_filename, JSON.stringify( model, null, 2 ), (err) ->
     die err if err
 
-simplify = (complex,target_triangles) ->
+simplify = (model,target_triangles) ->
   queue = new pq (a,b) ->
     return a.error - b.error
 
@@ -38,13 +38,13 @@ simplify = (complex,target_triangles) ->
 
   console.log "  Prepping..."
 
-  for v, i in complex.vertices
+  for v, i in model.vertices
     v2t[ i ] = []
     edges[ i ] = {}
 
   edge_id = 0
 
-  for t, i in complex.triangles
+  for t, i in model.triangles
     v2t[ t[0] ].push i
     v2t[ t[1] ].push i
     v2t[ t[2] ].push i
@@ -55,20 +55,18 @@ simplify = (complex,target_triangles) ->
 
       if ! edges[ v1 ][ v2 ]
         edge_item = { v1 : v1, v2 : v2, id : edge_id++ }
-        compute_removal_error complex, edge_item
+        compute_removal_error model, edge_item
         edges[ v1 ][ v2 ] = edge_item
         edges[ v2 ][ v1 ] = edge_item
         queue.push edge_item
 
-  console.log "  Cloning..."
+  triangle_count = model.triangles.length
 
-  simple = clone complex
-
-  triangle_count = simple.triangles.length
+  process.stdout.write "  Removing edges...#{triangle_count}/#{target_triangles}\r"
 
   while triangle_count > target_triangles
-    process.stdout.write "  Removing edges...#{triangle_count}/#{target_triangles}           \r" if triangle_count % 777 == 0
-    triangle_count -= collapse_next_edge simple, queue, edges, v2t
+    process.stdout.write "  Removing edges...#{triangle_count}/#{target_triangles}           \r" if triangle_count % 277 == 0
+    triangle_count -= collapse_next_edge model, queue, edges, v2t
 
   console.log "  Removing edges...done                     "
 
@@ -76,15 +74,15 @@ simplify = (complex,target_triangles) ->
 
   vertex_map = []
   newvertices = []
-  for i, v of simple.vertices
+  for i, v of model.vertices
     if v?
       vertex_map[ i ] = newvertices.length
       newvertices.push v
 
-  simple.vertices = newvertices
+  model.vertices = newvertices
 
   newtriangles = []
-  for i, t of simple.triangles
+  for i, t of model.triangles
     if t?
       for j in [ 0 .. 2 ]
         new_vertex = vertex_map[ t[j] ]
@@ -95,19 +93,7 @@ simplify = (complex,target_triangles) ->
 
       newtriangles.push t
 
-  simple.triangles = newtriangles
-
-  return simple
-
-clone = (obj) ->
-  if not obj? or typeof obj isnt 'object'
-    return obj
-
-  ret = new obj.constructor()
-  for k of obj
-    ret[k] = clone obj[k]
-
-  return ret
+  model.triangles = newtriangles
 
 compute_removal_error = (model,edge_item) ->
   edge_item.error = vec.size( vec.minus( model.vertices[ edge_item.v1 ], model.vertices[ edge_item.v2 ] ) )
@@ -122,7 +108,8 @@ collapse_next_edge = (model,queue,edges,v2t) ->
   v1 = next_edge.v1
   v2 = next_edge.v2
 
-  #console.log "removing edge #{v1}-#{v2} #{next_edge.error}<#{queue.peek().error}"
+  if next_edge.error > queue.peek().error
+    console.error "removing edge #{v1}-#{v2} #{next_edge.error}>#{queue.peek().error}"
 
   # update vertices
   # replace v1 with 0.5 * (v1 + v2)

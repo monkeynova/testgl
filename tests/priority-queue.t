@@ -9,6 +9,7 @@ is_deeply = (t,got,expect,message) -> t.is( JSON.stringify(got), JSON.stringify(
 
 test "in-order add", (t) ->
   queue = new pq (a,b) -> a-b
+  queue.doAssert()
   for i in [ 1 .. 5 ]
     queue.push i
   t.is( queue.size(), 5, "queue size" )
@@ -19,6 +20,7 @@ test "in-order add", (t) ->
 
 test "reverse-order add", (t) ->
   queue = new pq (a,b) -> a-b
+  queue.doAssert()
   for i in [ 1 .. 5 ].reverse()
     queue.push i
   for i in [ 1 .. 5 ]
@@ -28,6 +30,7 @@ test "reverse-order add", (t) ->
 
 test "reverse-priority add", (t) ->
   queue = new pq (a,b) -> b-a
+  queue.doAssert()
   for i in [ 1 .. 5 ]
     queue.push i
   for i in [ 1 .. 5 ].reverse()
@@ -36,6 +39,7 @@ test "reverse-priority add", (t) ->
 
 test "error field add", (t) ->
   queue = new pq (a,b) -> a.error - b.error
+  queue.doAssert()
 
   names = [ "0", "a", "b", "c", "d", "e" ]
 
@@ -47,6 +51,7 @@ test "error field add", (t) ->
 
 test "invalidate item", (t) ->
   queue = new pq (a,b) -> a.error - b.error
+  queue.doAssert()
 
   items = [
       { error : 1, name : "a", id : 1 },
@@ -80,6 +85,7 @@ test "invalidate item", (t) ->
 
 test "remove item", (t) ->
   queue = new pq (a,b) -> a.error - b.error
+  queue.doAssert()
 
   items = [
       { error : 1, name : "a", id : 1 },
