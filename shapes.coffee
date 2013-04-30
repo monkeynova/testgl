@@ -14,7 +14,7 @@ class Shape
     @center = center
     @initialized = true
     @shininess = 0
-    @shouldDrawNormals = false
+    @shouldDrawNormals = true
     @use_quats = true
 
   shapeMatrix: ->
@@ -213,6 +213,8 @@ class Shape
   drawNormals: (gl,pMatrix,vMatrix,shader) ->
       shapeMatrix = @shapeMatrix()
 
+      scale = if @_scale then @_scale else [ 1, 1, 1 ]
+
       if ! @normal_points
         @normal_points = gl.createBuffer()
         @normal_points.js = []
@@ -220,9 +222,9 @@ class Shape
           @normal_points.js.push @vertices.js[3*i]
           @normal_points.js.push @vertices.js[3*i+1]
           @normal_points.js.push @vertices.js[3*i+2]
-          @normal_points.js.push @vertices.js[3*i]   + @normals.js[3*i] * 0.1
-          @normal_points.js.push @vertices.js[3*i+1] + @normals.js[3*i+1] * 0.1
-          @normal_points.js.push @vertices.js[3*i+2] + @normals.js[3*i+2] * 0.1
+          @normal_points.js.push @vertices.js[3*i]   + @normals.js[3*i] * 0.1 / scale[0]
+          @normal_points.js.push @vertices.js[3*i+1] + @normals.js[3*i+1] * 0.1 / scale[1]
+          @normal_points.js.push @vertices.js[3*i+2] + @normals.js[3*i+2] * 0.1 / scale[2]
         gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
         gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normal_points.js ), gl.STATIC_DRAW
         @normal_points.itemSize = 3
@@ -307,11 +309,19 @@ class JSONModel extends Shape
 
     shape = this
 
+    @src_url = model_url
     @initialized = false
 
     getJSONMaybeDataURL model_url, (data) -> shape.initData gl, data
 
-  validateData: (date) -> true
+  validateData: (data) ->
+    max_vertex = data.vertices.length - 1
+    for t in data.triangles
+      for vi in t
+        if vi > max_vertex
+          console.log "bad data [vertex index] #{v1} > #{max_vertex}"
+
+    return true
 
   initData: (gl, data) ->
       if ! @validateData( data )
@@ -347,6 +357,10 @@ class JSONModel extends Shape
 
       if ! @model.normals || @model.normals.length == 0
         @model.normals = []
+
+        for i of @model.vertices
+          @model.normals[i] = []
+  
         for t in @model.triangles
           v1 = vec3.create @model.vertices[ t[1] ]
           v2 = vec3.create @model.vertices[ t[2] ]
@@ -358,9 +372,18 @@ class JSONModel extends Shape
           vec3.normalize normal
 
           # Normal for each vertex
-          @model.normals.push [ normal[0], normal[1], normal[2] ]
-          @model.normals.push [ normal[0], normal[1], normal[2] ]
-          @model.normals.push [ normal[0], normal[1], normal[2] ]
+          @model.normals[ t[0] ].push normal
+          @model.normals[ t[1] ].push normal
+          @model.normals[ t[2] ].push normal
+
+        for i of @model.normals
+          if @model.normals[i].length == 0
+            @model.normals[i] = [ 0, 0, 0 ]
+          else
+            combined = @model.normals[i].reduce (a,b) -> vec3.add( a, b, vec3.create() )
+            vec3.scale combined, 1 / @model.normals[i].length
+            @model.normals[i] = [ combined[0], combined[1], combined[2] ]
+            
 
       @normals = @buildBuffer gl, @model.normals
 
