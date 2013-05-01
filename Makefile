@@ -6,7 +6,7 @@ NPM_OPTS=$(shell echo $(NPM) | grep -P 'cygdrive|~|home' > /dev/null && echo -g)
 
 EXT_JS=webgl-utils.js jquery-1.9.1.min.js glMatrix-0.9.5.min.js jquery.base64.js
 
-SIZES=1000 10000 100000 200000
+SIZES=1000 10000 50000 100000 200000
 MODELS=armadillo
 
 SIZED_MODELS=$(foreach model,$(MODELS),$(model) $(foreach size,$(SIZES),$(model).$(size)))

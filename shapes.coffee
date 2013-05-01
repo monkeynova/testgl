@@ -110,6 +110,8 @@ class Shape
   drawSolid: (gl,pMatrix,vMatrix,shader) ->
     return if ! @initialized
 
+    return if @renderWire
+
     shapeMatrix = @shapeMatrix()
 
     if @texture
@@ -201,47 +203,81 @@ class Shape
 
     if @index
       gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @index
-      gl.drawElements @drawtype, @index.numItems, gl.UNSIGNED_SHORT, 0
+      gl.drawElements gl.TRIANGLES, @index.numItems, gl.UNSIGNED_SHORT, 0
     else
-      gl.drawArrays @drawtype, 0, @vertices.numItems
+      gl.drawArrays gl.TRIANGLES, 0, @vertices.numItems
 
   drawWire: (gl,pMatrix,vMatrix,shader) ->
     return if ! @initialized
 
+    @drawShapeWire gl, pMatrix, vMatrix, shader if @renderWire
+
     @drawNormals gl, pMatrix, vMatrix, shader if @shouldDrawNormals
 
+  drawShapeWire: (gl,pMatrix,vMatrix,shader) ->
+    shapeMatrix = @shapeMatrix()
+
+    if ! @wire_index
+      build = []
+      if @index
+        for i in [ 0 .. @index.js.length ] by 3
+          build.push [ @index.js[i], @index.js[i+1] ]
+          build.push [ @index.js[i+1], @index.js[i+2] ]
+          build.push [ @index.js[i+2], @index.js[i] ]
+      else
+        for i in [ 0 .. @triangles.js.length ] by 3
+          build.push [ i, i + 1 ]
+          build.push [ i + 1, i + 2 ]
+          build.push [ i + 2, i ]
+
+      @wire_index = @buildElementBuffer gl, build
+
+    gl.useProgram shader
+
+    gl.uniform4f shader.uniforms["uAmbientColor"], 1, 1, 1, 1
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
+    gl.vertexAttribPointer shader.attributes["aVertexPosition"], @vertices.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.uniformMatrix4fv shader.uniforms["uProjectionMatrix"], false, pMatrix
+    gl.uniformMatrix4fv shader.uniforms["uViewMatrix"], false, vMatrix
+    gl.uniformMatrix4fv shader.uniforms["uModelMatrix"], false, shapeMatrix
+
+    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @wire_index
+    gl.drawElements gl.LINES, @wire_index.numItems, gl.UNSIGNED_SHORT, 0
+
   drawNormals: (gl,pMatrix,vMatrix,shader) ->
-      shapeMatrix = @shapeMatrix()
+    shapeMatrix = @shapeMatrix()
 
-      scale = if @_scale then @_scale else [ 1, 1, 1 ]
+    scale = if @_scale then @_scale else [ 1, 1, 1 ]
 
-      if ! @normal_points
-        @normal_points = gl.createBuffer()
-        @normal_points.js = []
-        for i in [ 0 .. @vertices.numItems ]
-          @normal_points.js.push @vertices.js[3*i]
-          @normal_points.js.push @vertices.js[3*i+1]
-          @normal_points.js.push @vertices.js[3*i+2]
-          @normal_points.js.push @vertices.js[3*i]   + @normals.js[3*i] * 0.1 / scale[0]
-          @normal_points.js.push @vertices.js[3*i+1] + @normals.js[3*i+1] * 0.1 / scale[1]
-          @normal_points.js.push @vertices.js[3*i+2] + @normals.js[3*i+2] * 0.1 / scale[2]
-        gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
-        gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normal_points.js ), gl.STATIC_DRAW
-        @normal_points.itemSize = 3
-        @normal_points.numItems = @normal_points.js.length / @normal_points.itemSize
-
-      gl.useProgram shader
-
-      gl.uniform4f shader.uniforms["uAmbientColor"], 1, 1, 1, 1
-
+    if ! @normal_points
+      @normal_points = gl.createBuffer()
+      @normal_points.js = []
+      for i in [ 0 .. @vertices.numItems ]
+        @normal_points.js.push @vertices.js[3*i]
+        @normal_points.js.push @vertices.js[3*i+1]
+        @normal_points.js.push @vertices.js[3*i+2]
+        @normal_points.js.push @vertices.js[3*i]   + @normals.js[3*i] * 0.1 / scale[0]
+        @normal_points.js.push @vertices.js[3*i+1] + @normals.js[3*i+1] * 0.1 / scale[1]
+        @normal_points.js.push @vertices.js[3*i+2] + @normals.js[3*i+2] * 0.1 / scale[2]
       gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
-      gl.vertexAttribPointer shader.attributes["aVertexPosition"], @normal_points.itemSize, gl.FLOAT, false, 0, 0
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @normal_points.js ), gl.STATIC_DRAW
+      @normal_points.itemSize = 3
+      @normal_points.numItems = @normal_points.js.length / @normal_points.itemSize
 
-      gl.uniformMatrix4fv shader.uniforms["uProjectionMatrix"], false, pMatrix
-      gl.uniformMatrix4fv shader.uniforms["uViewMatrix"], false, vMatrix
-      gl.uniformMatrix4fv shader.uniforms["uModelMatrix"], false, shapeMatrix
+    gl.useProgram shader
 
-      gl.drawArrays gl.LINES, 0, @normal_points.numItems
+    gl.uniform4f shader.uniforms["uAmbientColor"], 1, 1, 1, 1
+
+    gl.bindBuffer gl.ARRAY_BUFFER, @normal_points
+    gl.vertexAttribPointer shader.attributes["aVertexPosition"], @normal_points.itemSize, gl.FLOAT, false, 0, 0
+
+    gl.uniformMatrix4fv shader.uniforms["uProjectionMatrix"], false, pMatrix
+    gl.uniformMatrix4fv shader.uniforms["uViewMatrix"], false, vMatrix
+    gl.uniformMatrix4fv shader.uniforms["uModelMatrix"], false, shapeMatrix
+
+    gl.drawArrays gl.LINES, 0, @normal_points.numItems
 
 class Triangle extends Shape        
   constructor: (gl,center) ->
@@ -269,39 +305,6 @@ class Triangle extends Shape
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
     @colors.itemSize = 4
     @colors.numItems = @colors.js.length / @colors.itemSize
-
-    @drawtype = gl.TRIANGLES
-
-class Square extends Shape        
-  constructor: (gl,center) ->
-    super gl, center
-    @vertices = gl.createBuffer()
-    gl.bindBuffer gl.ARRAY_BUFFER, @vertices
-    @vertices.js =
-      [
-        1, 1, 0,
-        -1, 1, 0,
-        1, -1, 0,
-        -1, -1, 0,
-      ]
-    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @vertices.js ), gl.STATIC_DRAW
-    @vertices.itemSize = 3
-    @vertices.numItems = @vertices.js.length / @vertices.itemSize
-  
-    @colors = gl.createBuffer()
-    gl.bindBuffer gl.ARRAY_BUFFER, @colors
-    @colors.js =
-      [
-        1, 0.5, 1, 1,
-        1, 0.5, 1, 1,
-        1, 0.5, 1, 1,
-        1, 0.5, 1, 1,
-      ]
-    gl.bufferData gl.ARRAY_BUFFER, new Float32Array( @colors.js ), gl.STATIC_DRAW
-    @colors.itemSize = 4
-    @colors.numItems = @colors.js.length / @colors.itemSize
-
-    @drawtype = gl.TRIANGLE_STRIP
 
 class JSONModel extends Shape
   constructor: (gl,center,model_url) ->
@@ -387,8 +390,6 @@ class JSONModel extends Shape
 
       @normals = @buildBuffer gl, @model.normals
 
-      @drawtype = gl.TRIANGLES
-
       @initialized = true
 
 class Pyramid extends Shape        
@@ -470,7 +471,6 @@ class Pyramid extends Shape
     @colors.itemSize = 4
     @colors.numItems = @colors.js.length / @colors.itemSize
 
-    @drawtype = gl.TRIANGLES
 
 class Cube extends Shape        
   constructor: (gl,center) ->
@@ -645,8 +645,6 @@ class Cube extends Shape
     gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( @index.js ), gl.STATIC_DRAW
     @index.itemSize = 1
     @index.numItems = @index.js.length / @index.itemSize
-
-    @drawtype = gl.TRIANGLES
 
 
 class TextureCube extends Cube
@@ -845,8 +843,6 @@ class Terrain extends Shape
       gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( @index.js ), gl.STATIC_DRAW
       @index.itemSize = 1
       @index.numItems = @index.js.length / @index.itemSize
-
-      @drawtype = gl.TRIANGLES
 
       @initialized = true
 
