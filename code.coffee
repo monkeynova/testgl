@@ -79,7 +79,7 @@ $ ->
     shapes.push lightSphere
 
     armadillo_center = [ 0, 1, -7 ]
-    armadillo = new JSONModel gl, armadillo_center, "armadillo.50000.model.js"
+    armadillo = new JSONModel gl, armadillo_center, "armadillo.10000.model.js"
     armadillo.scale [ 1/60, 1/60, 1/60 ]
     armadillo.animate 1/3, [ 0, 1, 0 ]
     shapes.push armadillo

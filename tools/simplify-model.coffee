@@ -13,7 +13,7 @@ in_filename = process.argv[2]
 out_filename = process.argv[3]
 target_triangles = process.argv[4]
 
-die "usage: simplify-model.coffee <infile> <outfile> <target triangle count>" if ! target_triangles
+die "usage: #{process.argv[0]} <infile> <outfile> <target triangle count>" if ! target_triangles
 
 console.log "Loading..."
 fs.readFile in_filename, (err,data) ->
