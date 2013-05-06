@@ -10,7 +10,7 @@ test "combine_perimeter", (t) ->
   combine_perimiters = Atlas._fortest.combine_perimiters
   check = (a,b,should,m) ->
     tm.is_deeply t, rotate_canon( combine_perimiters( a, b ) ), should, m
-#    t.is combine_perimiters( b, a ), should, m
+#    tm.is_deeply t, rotate_canon( combine_perimiters( b, a ) ), should, m
 
   t.test "simple", (t) ->
     check [ 0, 1, 2 ], [ 1, 2, 3 ], [ 0, 1, 3, 2 ], "simple join"
@@ -46,5 +46,10 @@ rotate_canon = (a) ->
   ret = []
   ret = ret.concat ( a[i] for i in [ min_pos .. (a.length - 1) ] )
   ret = ret.concat ( a[i] for i in [ 0 .. (min_pos - 1) ] )
+
+  if ret[1] > ret[ ret.length - 1 ]
+    save = ret.shift()
+    ret = ret.reverse()
+    ret.unshift save
 
   return ret

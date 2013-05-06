@@ -126,8 +126,7 @@ combine_perimiters = (a,b) ->
           else
             throw new Error "non-consecutive overlap #{hist[v]} #{overlaps[overlaps.length-1][3]}"
         else
-          if (hist[v] + b.length + b_dir) % b.length != overlaps[overlaps.length - 1][3]
-            console.error "#{hist[v]} #{b.length} #{b_dir} #{(hist[v] + b.length + b_dir) % b.length} #{overlaps[overlaps.length - 1][3]}"
+          if (hist[v] + b.length - b_dir) % b.length != overlaps[overlaps.length - 1][3]
             throw new Error "overlap changed directions!"
   
         overlaps[overlaps.length - 1][1] = i
@@ -140,6 +139,12 @@ combine_perimiters = (a,b) ->
 
   if overlaps.length == 2 && overlaps[0][0] == 0 && overlaps[1][1] == a.length - 1
     # wrap-around
+    if b_dir == 0
+      if ((overlaps[0][2] + b.length - 1) % b.length) == overlaps[1][2]
+        b_dir = +1
+      else if ((overlaps[0][2] + 1) % b.length) == overlaps[1][2]
+        b_dir = -1
+
     overlaps[0][0] = overlaps[1][0]
     overlaps[0][2] = overlaps[1][2]
     overlaps.pop()
@@ -184,7 +189,7 @@ combine_perimiters = (a,b) ->
     if join_start_b > 0
       b_part = b_part.concat ( b[i] for i in [ 0 .. (join_start_b - 1) ] )
 
-  return a_part.concat b_part
+  return a_part.concat b_part.reverse()
 
 collapse_cost = (vertices, a, b) ->
   new_plane = combine_planes a, b 
