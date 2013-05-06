@@ -2,16 +2,15 @@
 # -*- Mode: coffee; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 
 test = require( 'tap' ).test
+tm = require( '../tools/test-more.coffee' )
 
 Set = require( '../tools/set.coffee' ).Set
-
-is_deeply = (t,got,expect,message) -> t.is( JSON.stringify(got), JSON.stringify(expect), message )
 
 test "simple", (t) ->
   s = new Set 1, 2, 3
   t.ok s.contains( 1 ), "1 is in"
   t.notok s.contains( 4 ), "4 is out"
-  is_deeply( t, s.list().sort( (a,b) -> a - b ), [ 1, 2, 3 ],  "list is correct" )
+  tm.is_deeply( t, s.list().sort( (a,b) -> a - b ), [ 1, 2, 3 ],  "list is correct" )
   t.is s.size(), 3, "size is 3"
   t.end()
 

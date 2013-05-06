@@ -2,7 +2,7 @@
 
 class Set
   constructor: (maybe_hash,rest...) ->
-    if typeof maybe_hash == "object"
+    if rest.length == 0 && typeof maybe_hash == "object"
       @_items = maybe_hash
     else
       @_items = {}

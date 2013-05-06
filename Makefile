@@ -25,9 +25,7 @@ clean:
 	rm -rf $(OUT) $(GENERATED)
 
 neat:
-	rm -f *~
-	rm -f \#*\#
-	rm -f .\#*
+	find . -name *~ -or -name \#*\# -or -name .\#* | xargs rm
 
 include $(GENERATED)/build_dependencies.d
 include $(SOURCE_FILES:%=$(GENERATED)/%.d)
