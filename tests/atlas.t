@@ -9,15 +9,16 @@ Atlas = require( '../tools/atlas.coffee' )
 test "combine_perimeter", (t) ->
   combine_perimiters = Atlas._fortest.combine_perimiters
   check = (a,b,should,m) ->
-    tm.is_deeply t, rotate_canon( combine_perimiters( a, b ) ), should, m
-#    tm.is_deeply t, rotate_canon( combine_perimiters( b, a ) ), should, m
+    tm.is_deeply t, canon_perimiter( combine_perimiters( a, b ) ), should, m
+    tm.is_deeply t, canon_perimiter( combine_perimiters( b, a ) ), should, "#{m} (reverse)"
 
   t.test "simple", (t) ->
+    check [ 0, 1, 2, 3 ], [ 0, 3, 4 ], [ 0, 1, 2, 3, 4 ], "wrap around"
     check [ 0, 1, 2 ], [ 1, 2, 3 ], [ 0, 1, 3, 2 ], "simple join"
-    check [ 0, 1, 2 ], [ 2, 1, 3 ], [ 0, 1, 3, 2 ], "simple join (reverse order)"
+    check [ 0, 1, 2 ], [ 2, 1, 3 ], [ 0, 1, 3, 2 ], "simple join; rotate"
     check [ 0, 1, 2, 3 ], [ 1, 2, 4, 5 ], [ 0, 1, 5, 4, 2, 3 ], "slightly more complex join"
     check [ 0, 1, 2 ], [ 0, 1, 2 ], [ 0, 1, 2 ], "full overlap"
-    check [ 0, 1, 2 ], [ 1, 2, 0 ], [ 0, 1, 2 ], "full overlap (reverse)"
+    check [ 0, 1, 2 ], [ 1, 2, 0 ], [ 0, 1, 2 ], "full overlap; rotate"
     check [ 0, 1, 2, 3 ], [ 0, 3, 4 ], [ 0, 1, 2, 3, 4 ], "wrap around"
     check [ 0, 1, 2 ], [ 0, 1, 2, 3 ], [ 0, 1, 2, 3 ], "subset perimiter"
     t.end()
@@ -32,7 +33,7 @@ test "combine_perimeter", (t) ->
 
   t.end()
 
-rotate_canon = (a) ->
+canon_perimiter = (a) ->
   min = null
   min_pos = -1
   for i,v of a

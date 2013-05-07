@@ -167,22 +167,26 @@ combine_perimiters = (a,b) ->
     # full overlap, but b could be bigger
     return b
 
+  if b_dir < 0
+    [ join_end_b, join_start_b ] = [ join_start_b, join_end_b ]
+
+  if join_start_b == 0 && join_end_b == b.length - 1
+    # full overlap, but a is larger
+    return a
+
   a_part = []
   if join_start_a > join_end_a
     # wrap around
-    a_part = ( a[i] for i in [ join_start_a .. join_end_a ] )
+    a_part = ( a[i] for i in [ join_start_a .. join_end_a ] by -1 )
   else
     a_part = a_part.concat ( a[i] for i in [ join_end_a .. (a.length - 1) ] )
     a_part = a_part.concat ( a[i] for i in [ 0 .. join_start_a ] )
 
-  if b_dir < 0
-    [ join_end_b, join_start_b ] = [ join_start_b, join_end_b ]
-
   b_part = []
   if join_start_b > join_end_b
     # wrap around
-    if join_end_b > join_start_b + 1
-      b_part = ( b[i] for i in [ (join_start_b + 1) .. (join_end_b - 1) ] )
+    if join_start_b > join_end_b + 1
+      b_part = ( b[i] for i in [ (join_start_b - 1) .. (join_end_b + 1) ] by -1 )
   else
     if join_end_b < b.length - 1
       b_part = b_part.concat ( b[i] for i in [ (join_end_b + 1) .. (b.length - 1) ] )
