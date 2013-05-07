@@ -2,14 +2,15 @@
 
 class Set
   constructor: (maybe_hash,rest...) ->
-    if rest.length == 0 && typeof maybe_hash == "object"
-      @_items = maybe_hash
-    else
-      @_items = {}
-      i = maybe_hash
-      @_items[if typeof i == "object" then i.id else i] = i
-      for i in rest
+    @_items = {}
+    if maybe_hash?
+      if rest.length == 0 && typeof maybe_hash == "object"
+        @_items = maybe_hash
+      else
+        i = maybe_hash
         @_items[if typeof i == "object" then i.id else i] = i
+        for i in rest
+          @_items[if typeof i == "object" then i.id else i] = i
 
   list: -> val for key, val of @_items
 
