@@ -13,15 +13,23 @@ build_atlas = (model) ->
     edges[i] = {}
     atlas.vertices.push v
 
-
   for t in model.triangles
     v1 = model.vertices[ t[0] ]
     v2 = model.vertices[ t[1] ]
     v3 = model.vertices[ t[2] ]
     normal = vec.normalize( vec.cross( vec.minus( v2, v1 ), vec.minus( v3, v1 ) ) )
     p = vec.scale( vec.add( vec.add( v1, v2 ), v3 ), 1/3 )
-    chart = { triangles : [ t ], perimiter : t, plane : { normal : normal, point : p, weight : 1 } }
-    chart.index = atlas.charts.length
+    chart = {
+      triangles : [ t ],
+      perimiter : [ t[0], t[1], t[2] ],
+      plane : {
+        normal : normal,
+        point : p,
+        weight : 1
+      },
+      id : atlas.charts.length,
+      could : new Set
+    }
     atlas.charts.push chart
 
     for vpair in [ [ t[0], t[1] ], [ t[1], t[2] ], [ t[2], t[0] ] ]
@@ -30,8 +38,12 @@ build_atlas = (model) ->
         edges[ vpair[1] ][ vpair[0] ] = [] 
       edges[ vpair[0] ][ vpair[1] ].push chart
       edges[ vpair[1] ][ vpair[0] ].push chart
-      
+
   queue = new pq (a,b) -> a.cost - b.cost
+
+  max_id = atlas.charts.length
+
+  queue_index = {}
 
   skipped_joins = 0
   for v1 of edges
@@ -49,27 +61,79 @@ build_atlas = (model) ->
 
       cost = collapse_cost model.vertices, charts[0], charts[1]
 
-      if cost != cost
-        throw new Error "#{v1}-#{v2} cost calculation is bad"
+      smaller_id = Math.min charts[0].id, charts[1].id
+      larger_id = Math.max charts[0].id, charts[1].id
 
-      could = new Set charts[0], charts[1]
+      id = larger_id * max_id + smaller_id
+      if queue_index[id]?
+        continue
 
-      charts[0].could = if charts[0].could then charts[0].could.union could else could
-      charts[1].could = if charts[1].could then charts[1].could.union could else could
+      could = new Set charts[0].id, charts[1].id
 
-      item = { cost : cost, a : charts[0], b : charts[1] }
+      charts[0].could = charts[0].could.union could
+      charts[1].could = charts[1].could.union could
+
+      item = { cost : cost, a : charts[0], b : charts[1], id : id }
       queue.push item
+
+      queue_index[item.id] = item
 
   console.log "Skipped #{skipped_joins}/#{queue.size()} edges with > 2 charts"
 
   while next = queue.pop()
-    break if next.cost > 3
+    break if next.cost > 100
+
+    delete queue_index[ next.id ]
 
     console.log "cost=#{next.cost}"
 
-    collapsed = collapse_charts atlas, next.a, next.b
+    a = next.a
+    b = next.b
 
-    console.log { a : next.a, b : next.b, c: collapsed }
+    console.log a.could.list()
+    console.log b.could.list()
+
+    start_could = a.could.union( b.could ).minus( new Set a.id, b.id )
+
+    collapsed = collapse_charts atlas, a, b
+
+    console.log "perimiter_size=#{collapsed.perimiter.length}"
+
+    collapsed.id = a.id
+    delete a[x] for x of a
+    a[x] = collapsed[x] for x of collapsed 
+
+    still_can = a.could
+    now_cant = start_could.minus still_can
+
+    update_hist = {}
+    update_hist[ next.id ] = true
+    for m1 in start_could.list()
+      for m2 in start_could.list()
+        continue if m1 == m2
+
+        smaller_id = Math.min m1, m2
+        larger_id = Math.max m1, m2
+
+        id = larger_id * max_id + smaller_id
+        continue if update_hist[id]
+
+        update_hist[id] = true
+
+        console.log "looking for #{smaller_id},#{larger_id}"
+
+        find = queue_index[id]
+
+        if ! find?
+          throw new Error "can't find #{id} in queue_index"
+
+        if still_can.contains m1 && still_can.contains m2
+          console.log "invalidate"
+          find.cost = collapse.cost atlas.vertices, atlas.charts[m1], atlas.charts[m2]
+          queue.invalidateItem find
+        else
+          console.log "remove #{a.id},#{b.id} => #{m1},#{m2}"
+          queue.removeItem find
 
   return atlas
 
@@ -78,7 +142,7 @@ collapse_charts = (atlas,a,b) ->
   collapsed.triangles = a.triangles.concat b.triangles
   collapsed.plane = combine_planes a.plane, b.plane
   collapsed.perimiter = combine_perimiters a.perimiter, b.perimiter
-  collapsed.could = a.could.union( b.could ).minus( new Set a, b )
+  collapsed.could = a.could.union( b.could ).minus( new Set a.id, b.id )
 
   return collapsed
 
@@ -196,7 +260,7 @@ combine_perimiters = (a,b) ->
   return a_part.concat b_part.reverse()
 
 collapse_cost = (vertices, a, b) ->
-  new_plane = combine_planes a, b 
+  new_plane = combine_planes a.plane, b.plane
   
   planarity = 0 # how co-planar is charta U chartb
 

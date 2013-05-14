@@ -34,6 +34,8 @@ Resources
 * Glow Maps -- http://www.nutty.ca/?page_id=352&link=glow
 * The Standford Models -- http://graphics.stanford.edu/data/3Dscanrep/
 * THREE.js -- http://threejs.org/ http://github.com/mrdoob/three.js/
+* Appearance Preserving Simplification -- http://gamma.cs.unc.edu/APS/APS.pdf
+* Texture Mapping Progressive Meshes -- http://research.microsoft.com/en-us/um/people/hoppe/tmpm.pdf
 
 Attribution
 -----------
